@@ -1,0 +1,994 @@
+/* Import High-Compatibility Fonts */
+  @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@800;900&family=Great+Vibes&family=Inter:ital,wght@0,400;0,500;0,700;1,400&family=Playfair+Display:ital@1&display=swap');
+
+  :root {
+    --color-primary: #1a1a2e;
+    --color-accent: #FFD700;
+    --gradient-gold: linear-gradient(to bottom, #FFF5A0 0%, #FFD700 45%, #FFD700 55%, #FDB931 100%);
+    --font-heading: 'Be Vietnam Pro', sans-serif;
+    --font-cursive: 'Great Vibes', cursive;
+    --font-main: 'Inter', sans-serif;
+    --font-serif: 'Playfair Display', serif;
+
+    /* Dynamic Settings (Updated via Admin) */
+    --particle-size: 2px;
+    --glitter-size: 200px;
+    /* actually density: smaller = denser */
+    --glitter-dot-size: 1.5px;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    background: #000;
+    color: white;
+    overflow: hidden;
+    font-family: var(--font-main);
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  body.admin-body {
+    overflow: auto !important;
+    height: auto !important;
+    background: #f4f7fa;
+  }
+
+  #stage-container {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    background: url('https://lh3.googleusercontent.com/d/1BbSZ3RpduX8D_Mk8BtIJ9PicOu1nrfBz=s0') center/cover no-repeat !important;
+    background-color: #8B0000;
+    overflow: hidden;
+  }
+
+  /* LAYOUT */
+  .section {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 15%;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    z-index: 10;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    text-align: center;
+  }
+
+  .section.active {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .top-logo {
+    width: 140px;
+    margin-top: -20px;
+    /* Push logo up */
+    margin-bottom: 2rem;
+    /* Clear space for title marks */
+    filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.5));
+  }
+
+  .display-title {
+    font-family: var(--font-heading);
+    font-weight: 900;
+    font-size: clamp(1.5rem, 3.2vw, 3.5rem);
+    /* Adjusted for one-line layout */
+    text-transform: uppercase;
+    background: var(--gradient-gold);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(2px 2px 2px rgba(0, 0, 0, 0.8)) drop-shadow(0px 0px 20px rgba(255, 215, 0, 0.4));
+    line-height: 1.5;
+    /* Increased to give room for marks */
+    margin-bottom: 0.8rem;
+    white-space: nowrap;
+    /* Force one line */
+    max-width: 95vw;
+    letter-spacing: 1px;
+    overflow: visible;
+    /* Ensure marks aren't clipped */
+  }
+
+  .shimmer-text {
+    font-family: var(--font-cursive);
+    font-size: clamp(2.5rem, 5vw, 4.5rem);
+    /* Reduced size */
+    color: #FFD700 !important;
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.6), 2px 2px 4px rgba(0, 0, 0, 0.5);
+    animation: goldShimmer 3s infinite ease-in-out;
+  }
+
+  .location-date {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(0.9rem, 1.4vw, 1.5rem);
+    /* Smaller and more delicate */
+    color: #FFF5A0;
+    text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.8);
+    margin-top: 1rem;
+    opacity: 0.85;
+    letter-spacing: 0.5px;
+  }
+
+  /* --- VIP HONOR SCREEN EFFECTS --- */
+  #section-individual,
+  #section-team {
+    top: 0;
+    justify-content: center;
+  }
+
+  /* Mystical Black Background Overlay */
+  .mystical-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at center, transparent 30%, rgba(0, 0, 0, 0.85) 75%, #000 100%);
+    opacity: 0;
+    transition: opacity 1s ease;
+    z-index: 5;
+  }
+
+  .section.active .mystical-bg {
+    opacity: 1;
+  }
+
+  /* Rotating Golden Rays */
+  .honor-rays {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 200vmax;
+    height: 200vmax;
+    background: conic-gradient(from 0deg, transparent 0deg, rgba(255, 215, 0, 0.25) 15deg, transparent 30deg);
+    animation: rotateSlow 25s linear infinite;
+    z-index: 6;
+    opacity: 0;
+    transition: opacity 1.5s ease;
+  }
+
+  .section.active .honor-rays {
+    opacity: 1;
+  }
+
+  .award-hero-image {
+    width: 95vw;
+    height: 95vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 20;
+    transform: scale(0.5);
+    opacity: 0;
+    transition: all 1.5s cubic-bezier(0.19, 1, 0.22, 1);
+    position: relative;
+  }
+
+  .section.active .award-hero-image {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  .award-main-photo {
+    max-width: 90%;
+    max-height: 90%;
+    border: 5px solid #FFD700;
+    border-radius: 8px;
+    box-shadow: 0 0 120px rgba(255, 215, 0, 0.4), 0 0 200px rgba(0, 0, 0, 1);
+    background: #000;
+    object-fit: contain;
+    position: relative;
+    z-index: 21;
+    animation: heroPulse 3s infinite alternate ease-in-out;
+  }
+
+  /* Shimmering Glitters/Stars inside Hero Area */
+  .honor-glitter {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    transform: translate(-50%, -50%);
+    z-index: 25;
+    pointer-events: none;
+    background-image:
+      radial-gradient(circle at 20% 30%, #fff var(--glitter-dot-size), transparent var(--glitter-dot-size)),
+      radial-gradient(circle at 70% 40%, #FFD700 calc(var(--glitter-dot-size) * 1.3), transparent calc(var(--glitter-dot-size) * 1.3)),
+      radial-gradient(circle at 40% 80%, #fff var(--glitter-dot-size), transparent var(--glitter-dot-size)),
+      radial-gradient(circle at 80% 20%, #FFD700 var(--glitter-dot-size), transparent var(--glitter-dot-size));
+    background-size: var(--glitter-size) var(--glitter-size);
+    opacity: 0;
+    animation: glitterRun 4s infinite linear;
+    transition: opacity 2s ease;
+  }
+
+  .section.active .honor-glitter {
+    opacity: 0.8;
+  }
+
+  /* ADMIN MONITOR STYLE */
+  .monitor-panel {
+    background: #000;
+    color: #0f0;
+    padding: 1rem;
+    border-radius: 10px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.9rem;
+    min-height: 60px;
+    border: 2px solid #333;
+    margin-top: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  /* ADMIN UI */
+  .admin-layout {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+    background: #f4f7fa;
+    color: #333;
+  }
+
+  .sidebar {
+    width: 260px;
+    background: var(--color-primary);
+    color: white;
+    padding: 2rem 1.5rem;
+  }
+
+  .main-content {
+    flex: 1;
+    padding: 2.5rem;
+    overflow-y: auto;
+  }
+
+  .nav-item {
+    padding: 12px 20px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .nav-item:hover,
+  .nav-item.active {
+    background: #FFD700;
+    color: #000;
+  }
+
+  .card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 15px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+    margin-bottom: 2rem;
+    border: 1px solid #edf2f7;
+  }
+
+  .btn {
+    padding: 12px 24px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .btn-primary {
+    background: var(--color-primary);
+    color: white;
+  }
+
+  .btn-award {
+    background: #FFD700;
+    color: #000;
+    width: 100%;
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+  }
+
+  /* --- VIP LUCKY DRAW STYLES --- */
+  .lucky-screen,
+  #section-lucky {
+    z-index: 100000;
+    position: fixed;
+    top: 0 !important;
+    left: 0 !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh !important;
+    width: 100vw !important;
+    margin: 0 !important;
+    background: url('https://lh3.googleusercontent.com/d/1BbSZ3RpduX8D_Mk8BtIJ9PicOu1nrfBz=s0') center/cover no-repeat !important;
+    padding-top: 2vh;
+  }
+
+  .lucky-reel-container {
+    position: relative;
+    background: rgba(26, 2, 2, 0.9);
+    border: 8px double #FFD700;
+    border-radius: 40px;
+    padding: 60px 100px;
+    box-shadow: 0 0 80px rgba(255, 215, 0, 0.3), inset 0 0 40px rgba(0, 0, 0, 0.8);
+    margin: 2rem 0;
+    animation: luckyBoxEntry 1.2s cubic-bezier(0.19, 1, 0.22, 1);
+  }
+
+  .lucky-reel-container::before {
+    content: '';
+    position: absolute;
+    top: -15px;
+    left: -15px;
+    right: -15px;
+    bottom: -15px;
+    border: 2px solid rgba(255, 215, 0, 0.3);
+    border-radius: 50px;
+    pointer-events: none;
+  }
+
+  .lucky-number {
+    font-family: var(--font-heading);
+    font-size: clamp(10rem, 18vw, 22rem);
+    font-weight: 950;
+    color: #FFD700;
+    line-height: 0.9;
+    background: var(--gradient-gold);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.6));
+    letter-spacing: -5px;
+  }
+
+  .ld-prize-tag {
+    font-family: var(--font-heading);
+    color: #FFF5A0;
+    text-transform: uppercase;
+    font-size: 2.8rem;
+    letter-spacing: 5px;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+  }
+
+  .ld-prize-detail {
+    font-family: var(--font-main);
+    color: #fff;
+    font-size: 1.8rem;
+    opacity: 0.9;
+    margin-bottom: 2.5rem;
+    padding: 10px 30px;
+    background: rgba(255, 215, 0, 0.1);
+    border-radius: 50px;
+    border: 1px solid rgba(255, 215, 0, 0.2);
+  }
+
+  .winner-banner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.5);
+    background: linear-gradient(135deg, rgba(139, 0, 0, 0.95), rgba(255, 0, 0, 0.8));
+    padding: 1.5rem 2.5rem;
+    border-radius: 20px;
+    border: 3px solid #FFD700;
+    box-shadow: 0 0 50px rgba(255, 215, 0, 0.6), inset 0 0 15px rgba(255, 215, 0, 0.3);
+    z-index: 10000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    text-align: center;
+    min-width: 400px;
+    backdrop-filter: blur(25px);
+    box-shadow: 0 0 150px rgba(255, 215, 0, 0.8), 0 0 300px rgba(0, 0, 0, 1), inset 0 0 50px rgba(255, 215, 0, 0.4);
+  }
+
+  .winner-banner.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  .winner-text {
+    font-family: var(--font-heading);
+    font-size: 2.2rem;
+    color: #FFD700;
+    text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.5);
+    margin: 0;
+    line-height: 1.4;
+    font-weight: 900;
+  }
+
+  .winner-text span {
+    color: #fff;
+    display: block;
+    font-size: 1.2rem;
+    margin-top: 0.5rem;
+    text-transform: uppercase;
+  }
+
+  @keyframes luckyBoxEntry {
+    0% {
+      transform: translateY(100px) scale(0.8);
+      opacity: 0;
+    }
+
+    100% {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+  }
+
+  /* --- LUCKY WHEEL & MULTIPLE RESULTS --- */
+  .wheel-wrapper {
+    position: relative;
+    width: 540px;
+    height: 540px;
+    margin: 10px auto;
+    filter: drop-shadow(0 0 50px rgba(255, 215, 0, 0.4));
+  }
+
+  #lucky-wheel-canvas {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 10px solid #FFD700;
+  }
+
+  .wheel-pointer {
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50px;
+    height: 50px;
+    background: #FFD700;
+    clip-path: polygon(0 0, 100% 0, 50% 100%);
+    z-index: 100;
+    filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.5));
+  }
+
+  .winners-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    width: 80%;
+    margin-top: 2rem;
+    z-index: 100;
+  }
+
+  .winner-item {
+    background: rgba(255, 215, 0, 0.15);
+    border: 1px solid #FFD700;
+    padding: 1.5rem;
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+    animation: luckyBoxEntry 0.6s cubic-bezier(0.19, 1, 0.22, 1) both;
+  }
+
+  .winner-item h3 {
+    font-family: var(--font-heading);
+    color: #FFD700;
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .winner-item p {
+    font-size: 1.2rem;
+    color: #fff;
+    opacity: 0.9;
+  }
+
+  .form-control {
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    border: 2px solid #e2e8f0;
+    margin-top: 10px;
+  }
+
+  /* --- VIP PRO TRANSITION UPGRADE --- */
+
+  #slideshow-flare {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: radial-gradient(circle, #fff 0%, #ffd700 40%, #000 80%);
+    z-index: 9999;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  #slideshow-flare.active {
+    animation: vipFlash 0.8s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  }
+
+  @keyframes vipFlash {
+    0% {
+      opacity: 0;
+      transform: scale(0.8);
+    }
+
+    30% {
+      opacity: 1;
+      transform: scale(1.1);
+    }
+
+    100% {
+      opacity: 0;
+      transform: scale(1.5);
+    }
+  }
+
+  .award-main-photo {
+    transition: transform 1.2s cubic-bezier(0.165, 0.84, 0.44, 1),
+      filter 1.2s cubic-bezier(0.165, 0.84, 0.44, 1);
+  }
+
+  .award-main-photo.transitioning {
+    transform: scale(0.85);
+    filter: blur(20px) brightness(0.4);
+  }
+
+  /* --- RESPONSIVE ADMIN UI --- */
+  @media (max-width: 768px) {
+    .admin-layout {
+      flex-direction: column;
+      height: auto;
+      min-height: 100vh;
+      overflow-y: auto;
+    }
+
+    .sidebar {
+      width: 100%;
+      padding: 1rem;
+      border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    .sidebar h2 {
+      margin-bottom: 1rem !important;
+      text-align: center;
+      font-size: 1.2rem !important;
+    }
+
+    .nav-menu {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      justify-content: center;
+    }
+
+    .nav-item {
+      padding: 8px 12px;
+      margin-bottom: 0;
+      font-size: 0.8rem;
+      flex: 1;
+      min-width: 100px;
+      justify-content: center;
+    }
+
+    .main-content {
+      padding: 1rem;
+      height: auto !important;
+      overflow: visible !important;
+    }
+
+    .admin-grid {
+      grid-template-columns: 1fr !important;
+      gap: 1rem !important;
+    }
+
+    .card {
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      height: auto !important;
+      display: block !important;
+    }
+
+    .btn {
+      padding: 14px 20px;
+      font-size: 0.9rem;
+    }
+
+    .form-control {
+      padding: 10px;
+    }
+
+    /* Adjust Lucky Draw specific controls for mobile */
+    #tab-lucky .card div[style*="display: flex"] {
+      flex-direction: column !important;
+      gap: 10px !important;
+    }
+
+    #tab-lucky .card button,
+    #tab-lucky .card select,
+    #tab-lucky .card input {
+      width: 100% !important;
+      margin-bottom: 10px;
+      margin-top: 0 !important;
+    }
+  }
+
+  /* --- BONUS WHEEL & HAND INTERACTION (BÀN TAY NẮM CHẶT BÀN TAY) --- */
+  #section-bonus-wheel {
+    z-index: 100000;
+    position: fixed;
+    top: 0 !important;
+    left: 0 !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh !important;
+    width: 100vw !important;
+    background: transparent !important;
+  }
+
+  #bw-fireworks-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 230;
+  }
+
+  .bw-title-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin-top: -6vh;
+    margin-bottom: 55px;
+    z-index: 50;
+  }
+
+  .bw-arched-svg {
+    width: min(92vw, 1150px);
+    height: auto;
+    max-height: 135px;
+    overflow: visible;
+  }
+
+  .bw-arched-text {
+    font-family: var(--font-heading);
+    font-weight: 900;
+    font-size: 62px;
+    letter-spacing: 3px;
+    fill: url(#bwGoldGrad);
+    stroke: rgba(139, 0, 0, 0.45);
+    stroke-width: 1.5px;
+    paint-order: stroke fill;
+  }
+
+  .bw-subtitle {
+    font-size: clamp(1.9rem, 3vw, 2.8rem) !important;
+    margin-top: -34px;
+    margin-bottom: 0;
+  }
+
+  .bonus-wheel-wrapper {
+    position: relative;
+    width: 540px;
+    height: 540px;
+    margin: 0 auto;
+    filter: drop-shadow(0 0 50px rgba(255, 215, 0, 0.4));
+    transition: all 1s cubic-bezier(0.19, 1, 0.22, 1);
+  }
+
+  #bonus-wheel-canvas {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 12px solid #FFD700;
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+  }
+
+  /* 2 Bàn tay Nam (Trái) & Nữ (Phải) hai bên vòng quay */
+  .bw-side-hand {
+    position: absolute;
+    top: 52%;
+    width: 240px;
+    height: 240px;
+    z-index: 210;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.45s ease, visibility 0.45s ease;
+  }
+
+  .bw-hand-left {
+    left: -300px;
+    transform: translateY(-50%);
+  }
+
+  .bw-hand-right {
+    right: -300px;
+    transform: translateY(-50%);
+  }
+
+  .bw-side-hand.show {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .hand-icon-side {
+    width: 215px;
+    height: 215px;
+    object-fit: contain;
+    position: relative;
+    z-index: 10;
+    filter: drop-shadow(0 0 22px rgba(255, 215, 0, 0.85));
+    animation: handBreathe 1.8s infinite ease-in-out;
+  }
+
+  .hand-ripple {
+    position: absolute;
+    width: 115px;
+    height: 115px;
+    background: radial-gradient(circle, rgba(135, 206, 250, 0.55) 0%, rgba(255, 215, 0, 0.35) 70%, transparent 100%);
+    border: 2px solid rgba(255, 215, 0, 0.6);
+    border-radius: 50%;
+    animation: handRipple 2s infinite ease-out;
+  }
+
+  .hand-ripple-pink {
+    background: radial-gradient(circle, rgba(255, 182, 193, 0.6) 0%, rgba(255, 215, 0, 0.35) 70%, transparent 100%);
+  }
+
+  /* Hiệu ứng 2 bàn tay bay cách điệu theo đường vòng cung lên đỉnh vòng quay */
+  .bw-hand-left.moving-to-top {
+    animation: moveLeftHandToTop 1.15s cubic-bezier(0.34, 1.25, 0.64, 1) forwards;
+  }
+
+  .bw-hand-right.moving-to-top {
+    animation: moveRightHandToTop 1.15s cubic-bezier(0.34, 1.25, 0.64, 1) forwards;
+  }
+
+  @keyframes moveLeftHandToTop {
+    0% {
+      left: -300px;
+      top: 52%;
+      transform: translateY(-50%) scale(1) rotate(0deg);
+      opacity: 1;
+    }
+    55% {
+      left: -130px;
+      top: 12%;
+      transform: translateY(-50%) scale(1.06) rotate(20deg);
+      opacity: 1;
+    }
+    90% {
+      left: 28%;
+      top: 4%;
+      transform: translateY(-50%) scale(0.95) rotate(32deg);
+      opacity: 1;
+    }
+    100% {
+      left: 34%;
+      top: 4%;
+      transform: translateY(-50%) scale(0.6) rotate(35deg);
+      opacity: 0;
+    }
+  }
+
+  @keyframes moveRightHandToTop {
+    0% {
+      right: -300px;
+      top: 52%;
+      transform: translateY(-50%) scale(1) rotate(0deg);
+      opacity: 1;
+    }
+    55% {
+      right: -130px;
+      top: 12%;
+      transform: translateY(-50%) scale(1.06) rotate(-20deg);
+      opacity: 1;
+    }
+    90% {
+      right: 28%;
+      top: 4%;
+      transform: translateY(-50%) scale(0.95) rotate(-32deg);
+      opacity: 1;
+    }
+    100% {
+      right: 34%;
+      top: 4%;
+      transform: translateY(-50%) scale(0.6) rotate(-35deg);
+      opacity: 0;
+    }
+  }
+
+  /* Bàn tay nắm chặt nhau xuất hiện trên đỉnh vòng quay khi 2 tay gặp nhau */
+  .bw-clasped-container {
+    position: absolute;
+    top: 22px;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.3);
+    width: 260px;
+    height: 200px;
+    z-index: 260;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.45s ease, transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), visibility 0.45s ease;
+  }
+
+  .bw-clasped-container.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  .hand-icon-clasped {
+    width: 225px;
+    height: auto;
+    object-fit: contain;
+    position: relative;
+    z-index: 15;
+    filter: drop-shadow(0 0 25px #FFD700) drop-shadow(0 0 45px rgba(255, 105, 180, 0.7));
+    animation: claspedPulse 1.2s infinite ease-in-out;
+  }
+
+  .clasped-glow-burst {
+    position: absolute;
+    width: 240px;
+    height: 240px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.9) 0%, rgba(255, 215, 0, 0.65) 40%, rgba(255, 105, 180, 0.3) 70%, transparent 100%);
+    filter: blur(8px);
+    z-index: 5;
+    animation: burstPulse 1.5s infinite alternate ease-in-out;
+  }
+
+  @keyframes claspedPulse {
+    0%, 100% {
+      transform: scale(1) translateY(0);
+    }
+    50% {
+      transform: scale(1.08) translateY(-4px);
+    }
+  }
+
+  @keyframes burstPulse {
+    0% {
+      transform: scale(0.85);
+      opacity: 0.75;
+    }
+    100% {
+      transform: scale(1.2);
+      opacity: 1;
+    }
+  }
+
+  @keyframes handRipple {
+    0% {
+      transform: scale(0.9);
+      opacity: 0.85;
+    }
+
+    100% {
+      transform: scale(2.4);
+      opacity: 0;
+    }
+  }
+
+  @keyframes handBreathe {
+
+    0%,
+    100% {
+      transform: scale(1) translateY(0);
+    }
+
+    50% {
+      transform: scale(1.1) translateY(-6px);
+      filter: drop-shadow(0 0 35px #FFD700);
+    }
+  }
+
+  .bw-result-banner {
+    background: linear-gradient(135deg, #FFD700 0%, #DAA520 100%);
+    color: #8b0000;
+    padding: 2rem 4rem;
+    border-radius: 30px;
+    font-family: var(--font-heading);
+    font-size: 3rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    box-shadow: 0 0 100px rgba(255, 215, 0, 1);
+    transform: scale(0.5);
+    opacity: 0;
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: absolute;
+    z-index: 300;
+  }
+
+  .bw-result-banner.show {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  @keyframes rotateSlow {
+    from {
+      transform: translate(-50%, -50%) rotate(0deg);
+    }
+
+    to {
+      transform: translate(-50%, -50%) rotate(360deg);
+    }
+  }
+
+  @keyframes goldShimmer {
+
+    0%,
+    100% {
+      transform: scale(1);
+      filter: brightness(1);
+    }
+
+    50% {
+      transform: scale(1.05);
+      filter: brightness(1.2);
+    }
+  }
+
+  @keyframes heroPulse {
+    from {
+      transform: scale(0.98);
+      box-shadow: 0 0 50px rgba(255, 215, 0, 0.2);
+    }
+
+    to {
+      transform: scale(1.02);
+      box-shadow: 0 0 120px rgba(255, 215, 0, 0.5);
+    }
+  }
+
+  @keyframes glitterRun {
+    0% {
+      background-position: 0 0;
+    }
+
+    100% {
+      background-position: 300px 600px;
+    }
+  }

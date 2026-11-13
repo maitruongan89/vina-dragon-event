@@ -1,0 +1,9 @@
+{
+  "name": "vina-dragon-event-vercel",
+  "version": "1.0.0",
+  "private": true,
+  "description": "VINA DRAGON - Bàn Tay Nắm Chặt Bàn Tay (Vercel Edition)",
+  "scripts": {
+    "start": "npx vercel dev"
+  }
+}

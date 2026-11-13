@@ -1,0 +1,1442 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base target="_top">
+    <title>VINA DRAGON - Main Display</title>
+    <script>if (location.search.indexOf("page=admin") > -1 || location.search.indexOf("view=admin") > -1) { location.replace("/admin"); }</script>
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+        #sync-indicator {
+            position: fixed;
+            bottom: 14px;
+            right: 16px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(0, 255, 0, 0.3);
+            z-index: 999999;
+            transition: all 0.3s;
+            pointer-events: none;
+        }
+
+        #sync-indicator.active {
+            background: #0f0;
+            box-shadow: 0 0 10px #0f0;
+        }
+
+        #debug-log {
+            position: fixed !important;
+            bottom: 8px !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            font-family: 'Inter', 'Segoe UI', Tahoma, sans-serif !important;
+            font-size: 11px !important;
+            color: rgba(255, 240, 175, 0.85) !important;
+            background: none !important;
+            border: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            backdrop-filter: none !important;
+            padding: 0 !important;
+            z-index: 999999 !important;
+            letter-spacing: 1.2px !important;
+            font-weight: 400 !important;
+            white-space: nowrap !important;
+            pointer-events: none !important;
+            text-shadow:
+                0 0 4px rgba(255, 215, 0, 0.8),
+                0 0 8px rgba(255, 170, 0, 0.45),
+                0 1px 2px rgba(0, 0, 0, 0.9) !important;
+            animation: subtleLedPulse 3s ease-in-out infinite alternate !important;
+        }
+
+        #debug-log::before,
+        #debug-log::after {
+            content: none !important;
+            display: none !important;
+        }
+
+        @keyframes subtleLedPulse {
+            0% {
+                opacity: 0.72;
+                text-shadow:
+                    0 0 3px rgba(255, 215, 0, 0.55),
+                    0 0 7px rgba(255, 165, 0, 0.3),
+                    0 1px 2px rgba(0, 0, 0, 0.9);
+            }
+            100% {
+                opacity: 0.95;
+                text-shadow:
+                    0 0 5px rgba(255, 235, 130, 0.9),
+                    0 0 12px rgba(255, 195, 0, 0.65),
+                    0 0 20px rgba(255, 140, 0, 0.35),
+                    0 1px 2px rgba(0, 0, 0, 0.9);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- DUY NHẤT 1 FILE NHẠC NỀN: BÀN TAY NẮM CHẶT BÀN TAY (TỰ ĐỘNG PHÁT KHI MỞ MAIN) -->
+    <audio id="audio-bgm" autoplay loop preload="auto"
+        src="/bgm.mp3"
+        type="audio/mpeg"></audio>
+
+    <div id="stage-container">
+        <style>
+            #debug-log,
+            #author-led-text {
+                position: fixed !important;
+                bottom: 7px !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                font-family: 'Inter', 'Segoe UI', Tahoma, sans-serif !important;
+                font-size: 11px !important;
+                line-height: 1 !important;
+                color: rgba(255, 240, 175, 0.82) !important;
+                background: transparent !important;
+                background-image: none !important;
+                border: none !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                z-index: 999999 !important;
+                letter-spacing: 1.2px !important;
+                font-weight: 400 !important;
+                white-space: nowrap !important;
+                pointer-events: none !important;
+                text-shadow:
+                    0 0 4px rgba(255, 215, 0, 0.8),
+                    0 0 8px rgba(255, 170, 0, 0.45),
+                    0 1px 2px rgba(0, 0, 0, 0.95) !important;
+            }
+            #debug-log::before,
+            #debug-log::after,
+            #author-led-text::before,
+            #author-led-text::after {
+                content: none !important;
+                display: none !important;
+            }
+        </style>
+        <!-- ON-SCREEN DEBUGGING -->
+        <div id="sync-indicator"></div>
+        <div id="debug-log" style="display: none !important;"></div>
+        <div id="author-led-text">Mai Trường An - 0905012131</div>
+
+        <div id="bg-rays"></div>
+        <div id="bg-halo"></div>
+        <canvas id="particles-js"></canvas>
+
+        <!-- Waiting Screen -->
+        <div id="section-waiting" class="section">
+            <img src="https://lh3.googleusercontent.com/u/0/d/1Dnyf2iqPFOX-0j-2dz3r6rdkhVg_Pb_c" class="top-logo"
+                alt="Logo">
+            <h1 class="display-title">TRƯỜNG TRUNG CẤP NGHỀ TỔNG HỢP ASEAN</h1>
+            <p class="shimmer-text">LỄ CÔNG BỐ, TRAO QUYẾT ĐỊNH BỔ NHIỆM HIỆU TRƯỞNG</p>
+            <p class="location-date">Quảng Trị, ngày 14 tháng 11 năm 2026</p>
+        </div>
+
+        <!-- Individual Award - VIP UPGRADED -->
+        <div id="section-individual" class="section">
+            <div class="mystical-bg"></div>
+            <div class="honor-rays"></div>
+
+            <!-- VIP Transition Flare -->
+            <div id="slideshow-flare"></div>
+
+            <div class="award-hero-image">
+                <div class="honor-glitter"></div>
+                <img id="indiv-photo" class="award-main-photo" src="" alt="Vinh Danh">
+            </div>
+
+
+        </div>
+
+        <!-- Team Award - VIP UPGRADED -->
+        <div id="section-team" class="section">
+            <div class="mystical-bg"></div>
+            <div class="honor-rays"></div>
+            <div class="award-hero-image">
+                <div class="honor-glitter"></div>
+                <img id="team-photo" class="award-main-photo" src="" alt="Tập Thể">
+            </div>
+        </div>
+    </div>
+
+    <!-- Lucky Draw - VIP UPGRADED -->
+    <div id="section-lucky" class="section" style="z-index: 100;">
+        <div class="mystical-bg"></div>
+        <div class="honor-rays"></div>
+
+        <h2 id="ld-prize-tier" class="shimmer-text" style="font-size: 4rem; margin-bottom: 0.5rem;">QUAY SỐ MAY MẮN</h2>
+        <div id="ld-prize-name" class="ld-prize-detail"
+            style="font-size: 2rem; background: rgba(0,0,0,0.3); padding: 5px 30px; border-radius: 50px;">Bắt đầu lượt
+            quay mới</div>
+
+        <div class="wheel-wrapper">
+            <div class="wheel-pointer"></div>
+            <canvas id="lucky-wheel-canvas"></canvas>
+        </div>
+
+        <div id="ld-winners-list" class="winners-grid" style="display: none;">
+            <!-- Winners will appear here -->
+        </div>
+
+        <div id="ld-winner-banner" class="winner-banner">
+            <h2 id="winner-main-text" class="winner-text" style="font-size: 2.8rem; margin-bottom: 0.3rem;">CHÚC MỪNG MÃ
+                SỐ 00</h2>
+            <div id="winner-sub-text"
+                style="color: #fff; font-size: 1.4rem; text-transform: uppercase; font-weight: bold; text-shadow: 0 2px 10px rgba(0,0,0,0.5);">
+                ĐÃ TRÚNG: GIẢI ĐẶC BIỆT</div>
+        </div>
+    </div>
+
+    <!-- Bonus Wheel (Bàn tay nắm chặt bàn tay) - UPGRADED -->
+    <div id="section-bonus-wheel" class="section active">
+        <div class="mystical-bg"></div>
+        <div class="honor-rays"></div>
+        <canvas id="bw-fireworks-canvas"></canvas>
+
+        <!-- Curved Arched Title SVG -->
+        <div class="bw-title-container">
+            <svg class="bw-arched-svg" viewBox="0 0 1400 175" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="bwGoldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#FFF8B8" />
+                        <stop offset="40%" stop-color="#FFD700" />
+                        <stop offset="70%" stop-color="#FDB931" />
+                        <stop offset="100%" stop-color="#C99700" />
+                    </linearGradient>
+                    <filter id="bwTitleShadow" x="-10%" y="-20%" width="120%" height="150%">
+                        <feDropShadow dx="0" dy="4" stdDeviation="3" flood-color="#000000" flood-opacity="0.85" />
+                        <feDropShadow dx="0" dy="0" stdDeviation="14" flood-color="#FFD700" flood-opacity="0.55" />
+                    </filter>
+                    <path id="bwTitleArc" d="M 60,150 Q 700,30 1340,150" fill="none" />
+                </defs>
+                <text class="bw-arched-text" filter="url(#bwTitleShadow)">
+                    <textPath href="#bwTitleArc" startOffset="50%" text-anchor="middle">
+                        BÀN TAY NẮM CHẶT BÀN TAY
+                    </textPath>
+                </text>
+            </svg>
+            <p class="shimmer-text bw-subtitle">Chạm tay nhận lấy vận may!</p>
+        </div>
+
+        <div class="bonus-wheel-wrapper">
+            <div class="wheel-pointer"></div>
+            <canvas id="bonus-wheel-canvas"></canvas>
+
+            <!-- Bàn tay Nam (Bên trái vòng quay) -->
+            <div id="bw-hand-left" class="bw-side-hand bw-hand-left show">
+                <div class="hand-ripple"></div>
+                <img id="img-hand-male"
+                    crossorigin="anonymous"
+                    src="https://lh3.googleusercontent.com/d/1cx60JhYnIgphtJ8Ouc6_9A2OtCv4LMAX=w800"
+                    alt="Bàn Tay Nam" class="hand-icon-side">
+            </div>
+
+            <!-- Bàn tay Nữ (Bên phải vòng quay) -->
+            <div id="bw-hand-right" class="bw-side-hand bw-hand-right show">
+                <div class="hand-ripple hand-ripple-pink"></div>
+                <img id="img-hand-female"
+                    crossorigin="anonymous"
+                    src="https://lh3.googleusercontent.com/d/1l9RjlSTAEM-O095zCmbcHpvEbmpGEhHJ=w800"
+                    alt="Bàn Tay Nữ" class="hand-icon-side">
+            </div>
+
+            <!-- Bàn tay nắm chặt nhau (Xuất hiện trên đỉnh vòng quay khi 2 tay gặp nhau) -->
+            <div id="bw-hand-clasped" class="bw-clasped-container">
+                <div class="clasped-glow-burst"></div>
+                <img id="img-hand-clasped"
+                    crossorigin="anonymous"
+                    src="https://lh3.googleusercontent.com/d/1Za2VFG8OTNrne2cmFABZZLbvWLa6_Igx=w800"
+                    alt="Bàn Tay Nắm Nhau" class="hand-icon-clasped">
+            </div>
+        </div>
+
+        <div id="bw-result-banner" class="bw-result-banner">
+            CHÚC MỪNG: <span id="bw-winner-text">...</span>
+        </div>
+    </div>
+
+    <script src="/gas-shim.js"></script>
+    <script src="/core.js"></script>
+
+    <script>
+        // Global Error Boundary
+        window.onerror = function (msg, url, line) {
+            console.error("ERR: " + msg + " (L" + line + ")");
+            return false;
+        };
+
+        // --- PARTICLE ENGINE ---
+        (function () {
+            var canvas = document.getElementById('particles-js');
+            var ctx = canvas.getContext('2d');
+            var particles = [];
+            function resize() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            window.addEventListener('resize', resize);
+            resize();
+            for (var i = 0; i < 150; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: Math.random() * 2 + 1,
+                    speedY: Math.random() * 1.2 + 0.3,
+                    opacity: Math.random()
+                });
+            }
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = "rgba(255, 215, 0, 0.45)";
+                for (var i = 0; i < particles.length; i++) {
+                    var p = particles[i];
+                    p.y -= p.speedY;
+                    if (p.y < -10) p.y = canvas.height + 10;
+                    ctx.beginPath();
+                    // Use dynamic size from CSS variable or setting
+                    var pSize = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--particle-size')) || p.size;
+                    ctx.arc(p.x, p.y, pSize, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                requestAnimationFrame(animate);
+            }
+            animate();
+
+            // Expose update function
+            window.updateMainParticles = function (count, size) {
+                var currentCount = particles.length;
+                var targetCount = parseInt(count);
+                if (targetCount > currentCount) {
+                    for (var i = 0; i < (targetCount - currentCount); i++) {
+                        particles.push({
+                            x: Math.random() * canvas.width,
+                            y: Math.random() * canvas.height,
+                            size: Math.random() * 2 + 1,
+                            speedY: Math.random() * 1.2 + 0.3,
+                            opacity: Math.random()
+                        });
+                    }
+                } else if (targetCount < currentCount) {
+                    particles.splice(targetCount);
+                }
+            };
+        })();
+
+        // --- CORE SYNC ---
+        var log, syncDot, broadcast; // Global for activation access
+
+        document.addEventListener('DOMContentLoaded', function () {
+            broadcast = new window.BroadcastManager();
+            log = document.getElementById('author-led-text') || document.getElementById('debug-log');
+            syncDot = document.getElementById('sync-indicator');
+
+            // Đảm bảo xóa bỏ hoàn toàn khung viền và ngôi sao cũ của dòng chữ tác giả bằng JS
+            var fixStyle = document.createElement('style');
+            fixStyle.textContent = '#debug-log::before,#debug-log::after,#author-led-text::before,#author-led-text::after{content:none!important;display:none!important;}#debug-log,#author-led-text{font-family:"Inter","Segoe UI",sans-serif!important;font-size:11px!important;font-weight:400!important;background:none!important;border:none!important;box-shadow:none!important;backdrop-filter:none!important;padding:0!important;bottom:7px!important;color:rgba(255,240,175,0.82)!important;text-shadow:0 0 4px rgba(255,215,0,0.8),0 0 8px rgba(255,170,0,0.45),0 1px 2px rgba(0,0,0,0.95)!important;}';
+            document.head.appendChild(fixStyle);
+            var oldDbg = document.getElementById('debug-log');
+            if (oldDbg && document.getElementById('author-led-text')) {
+                oldDbg.style.setProperty('display', 'none', 'important');
+            }
+
+            function fixDriveUrl(url) {
+                if (!url) return '';
+                var id = String(url).match(/[-\w]{25,}/);
+                // Faster small thumbnails for web preview if sz is omitted, but sz=w1600 is good for quality/speed
+                return id ? 'https://drive.google.com/thumbnail?id=' + id[0] + '&sz=w1600' : url;
+            }
+
+            function showSect(id) {
+                log.innerText = "Mai Trường An - 0905012131";
+                document.querySelectorAll('.section').forEach(function (s) {
+                    s.classList.remove('active');
+                });
+                var target = document.getElementById(id);
+                if (target) target.classList.add('active');
+            }
+
+            function stopAllAudio() {
+                // Không dùng các file nhạc cũ nữa
+            }
+
+            var wantBgmPlaying = true;
+            var audioUnlocked = false;
+
+            // --- TỰ ĐỘNG PHÁT & MỞ KHÓA ÂM THANH NGẦM (KHÔNG HIỆN BANNER LÊN MÀN HÌNH CHIẾU) ---
+            function tryAutoPlayBgm() {
+                var b = document.getElementById('audio-bgm');
+                if (!b || !wantBgmPlaying) return;
+
+                b.muted = false;
+                b.volume = 1.0;
+                b.loop = true;
+                var p = b.play();
+                if (p !== undefined) {
+                    p.then(function () {
+                        audioUnlocked = true;
+                    }).catch(function () {
+                        // Thử mở khóa qua Web Audio API nếu trình duyệt cho phép
+                        try {
+                            var AudioCtx = window.AudioContext || window.webkitAudioContext;
+                            if (AudioCtx) {
+                                var ctx = new AudioCtx();
+                                ctx.resume().then(function () {
+                                    if (wantBgmPlaying && b.paused) {
+                                        b.play().catch(function () {});
+                                    }
+                                });
+                            }
+                        } catch (e) {}
+                    });
+                }
+            }
+
+            window.activateAudio = function () {
+                var b = document.getElementById('audio-bgm');
+                if (!b) return;
+
+                if (wantBgmPlaying) {
+                    b.muted = false;
+                    b.volume = 1.0;
+                    b.loop = true;
+                    var p = b.play();
+                    if (p !== undefined) {
+                        p.then(function () {
+                            audioUnlocked = true;
+                        }).catch(function () {});
+                    }
+                    return;
+                }
+
+                if (!audioUnlocked) {
+                    b.muted = true;
+                    var bPlay = b.play();
+                    if (bPlay !== undefined) {
+                        bPlay.then(function () {
+                            audioUnlocked = true;
+                            if (!wantBgmPlaying) {
+                                b.pause();
+                                b.currentTime = 0;
+                            }
+                            b.muted = false;
+                            b.volume = 1.0;
+                        }).catch(function () {
+                            b.muted = false;
+                        });
+                    }
+                }
+            };
+
+            // Tự động mở khóa ngầm khi có bất kỳ tương tác phím/chuột/cửa sổ nào (ví dụ bấm F11 phóng to màn hình)
+            ['click', 'touchstart', 'keydown', 'keyup', 'mousedown', 'pointerdown', 'focus'].forEach(function (evt) {
+                window.addEventListener(evt, window.activateAudio, { passive: true });
+            });
+
+            // Tự động bật nhạc nền ngay khi khởi chạy Main
+            tryAutoPlayBgm();
+
+            function playAudio(id, loop) {
+                if (id !== 'audio-bgm') return;
+                var audio = document.getElementById('audio-bgm');
+                if (audio) {
+                    audio.muted = false;
+                    audio.volume = 1.0;
+                    audio.loop = !!loop;
+                    var playPromise = audio.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch(function (error) {
+                            console.warn("Audio play blocked/failed:", error);
+                        });
+                    }
+                }
+            }
+
+            broadcast.onStateChange = function (state) {
+                syncDot.classList.add('active');
+                setTimeout(function () { syncDot.classList.remove('active'); }, 500);
+            };
+
+            // LISTENERS
+            broadcast.on(EVENT_TYPES.RESET_DISPLAY, function () {
+                stopSlideshow();
+                showSect('section-waiting');
+            });
+
+            broadcast.on(EVENT_TYPES.SHOW_INDIVIDUAL_AWARD, function (data) {
+                stopSlideshow();
+                updateHonorDisplay(data);
+            });
+
+            broadcast.on(EVENT_TYPES.UPDATE_SETTINGS, function (settings) {
+                var root = document.documentElement;
+                if (settings.glitterDens) root.style.setProperty('--glitter-size', settings.glitterDens + 'px');
+                if (settings.glitterSize) root.style.setProperty('--glitter-dot-size', settings.glitterSize + 'px');
+                if (settings.size) root.style.setProperty('--particle-size', settings.size + 'px');
+
+                if (window.updateMainParticles) {
+                    window.updateMainParticles(settings.count, settings.size);
+                }
+            });
+
+            broadcast.on(EVENT_TYPES.SHOW_TEAM_AWARD, function (data) {
+                stopSlideshow();
+                var img = document.getElementById('team-photo');
+                var displayed = false;
+                var reveal = function () {
+                    if (!displayed) { displayed = true; showSect('section-team'); }
+                };
+                img.onload = reveal;
+                img.onerror = reveal;
+                setTimeout(reveal, 1000);
+                img.src = fixDriveUrl(data.Image || data.image);
+            });
+
+            // LUCKY DRAW LOGIC - MAGIC WHEEL VERSION
+            var wheel = new window.LuckyWheel('lucky-wheel-canvas');
+            var currentPool = [];
+            var currentWinners = [];
+            var drawCount = 1;
+
+            var fastSpinId = null;
+            broadcast.on(EVENT_TYPES.LD_START_SPIN, function (data) {
+                stopSlideshow();
+                showSect('section-lucky');
+
+                document.getElementById('ld-prize-tier').innerText = data.prize;
+                document.getElementById('ld-prize-name').innerText = data.prizeName;
+                document.getElementById('ld-winner-banner').classList.remove('show');
+                document.getElementById('ld-winners-list').style.display = 'none';
+
+                var wheelWrapper = document.querySelector('.wheel-wrapper');
+                if (wheelWrapper) wheelWrapper.style.display = 'block';
+
+                currentPool = data.pool;
+                currentPrize = data.prize;
+                currentPrizeName = data.prizeName;
+                drawCount = data.quantity || 1;
+                currentWinners = [];
+
+                stopAllAudio();
+                wheel.setParticipants(currentPool);
+
+                // Continuous visual spin until STOP
+                if (fastSpinId) cancelAnimationFrame(fastSpinId);
+                var spinSpeed = 0.08;
+                function fastSpin() {
+                    if (wheel.isSpinning) {
+                        fastSpinId = null;
+                        return; // Managed by spinTo
+                    }
+                    wheel.currentAngle += spinSpeed;
+                    wheel.draw();
+                    fastSpinId = requestAnimationFrame(fastSpin);
+                }
+                fastSpin();
+            });
+
+            broadcast.on(EVENT_TYPES.LD_SHOW_WINNER, function (data) {
+                if (wheel.isSpinning) return;
+
+                var winnerNum = String(data.winnerNum).trim();
+                var currentPrizeName = data.prizeName || "GIẢI THƯỞNG";
+
+                // Final spin to the winner
+                var firstWinnerIdxInWheel = -1;
+                for (var i = 0; i < wheel.participants.length; i++) {
+                    var p = wheel.participants[i];
+                    var val = String(p.Code || p).trim();
+                    if (val === winnerNum) {
+                        firstWinnerIdxInWheel = i;
+                        break;
+                    }
+                }
+
+                if (firstWinnerIdxInWheel === -1) {
+                    console.error('Winner ' + winnerNum + ' not found in wheel!');
+                    return;
+                }
+
+                wheel.spinTo(firstWinnerIdxInWheel, function () {
+                    stopAllAudio();
+                    if (log) log.innerText = "Mai Trường An - 0905012131";
+                    // Update Banner Text
+                    document.getElementById('winner-main-text').innerText = "CHÚC MỪNG MÃ SỐ " + winnerNum.padStart(2, '0');
+                    document.getElementById('winner-sub-text').innerText = "ĐÃ TRÚNG: " + currentPrizeName.toUpperCase();
+
+                    // Show result overlay
+                    document.getElementById('ld-winner-banner').classList.add('show');
+
+                    // Save winner to DB
+                    google.script.run.ld_saveWinner(parseInt(winnerNum), data.prize + ": " + currentPrizeName);
+                });
+            });
+
+            // AUTO-CYCLE SLIDESHOW LOGIC (Reuses Individual Award Display)
+            var slideshowInterval = null;
+            var slideshowData = [];
+            var currentSlideIndex = 0;
+            var slideshowActive = false;
+
+            function stopSlideshow() {
+                slideshowActive = false;
+                if (slideshowInterval) {
+                    clearInterval(slideshowInterval);
+                    slideshowInterval = null;
+                }
+            }
+
+            function showNextSlide() {
+                if (!slideshowData || slideshowData.length === 0) {
+                    // log.innerText = "SLIDESHOW ERROR: No data";
+                    return;
+                }
+
+                currentSlideIndex = (currentSlideIndex + 1) % slideshowData.length;
+                var item = slideshowData[currentSlideIndex];
+
+                if (!item) {
+                    // log.innerText = "SLIDESHOW ERROR: Invalid item at index " + currentSlideIndex;
+                    return;
+                }
+
+                // log.innerText = "SLIDESHOW: " + (currentSlideIndex + 1) + "/" + slideshowData.length + " - " + (item.Name || '---');
+
+                // VIP PRO TRANSITION: Trigger Flare Effect
+                var flare = document.getElementById('slideshow-flare');
+                if (flare) {
+                    flare.classList.remove('active');
+                    void flare.offsetWidth; // Force reflow
+                    flare.classList.add('active');
+                }
+
+                // Update content mid-flash
+                setTimeout(function () {
+                    updateHonorDisplay(item);
+                }, 300);
+            }
+
+            function updateHonorDisplay(data) {
+                var img = document.getElementById('indiv-photo');
+
+                if (!img) return;
+
+                // Set transitioning state
+                img.classList.add('transitioning');
+
+                var displayed = false;
+                var reveal = function () {
+                    if (!displayed) {
+                        displayed = true;
+                        showSect('section-individual');
+                        img.classList.remove('transitioning');
+                    }
+                };
+
+                img.onload = reveal;
+                img.onerror = reveal;
+                img.src = fixDriveUrl(data.Image || data.image);
+
+                // Safety reveal
+                setTimeout(reveal, 1500);
+            }
+
+            broadcast.on(EVENT_TYPES.SHOW_ALL_LIST, function (data) {
+                // log.innerText = "SLIDESHOW: Loading nominees...";
+                console.log('SLIDESHOW: SHOW_ALL_LIST event received', data);
+
+                // Load all nominees
+                var dataManager = new window.DataManager();
+                console.log('SLIDESHOW: DataManager created', dataManager);
+
+                dataManager.getNominees().then(function (list) {
+                    console.log('SLIDESHOW: Nominees loaded', list);
+                    slideshowData = list;
+                    currentSlideIndex = -1; // Will become 0 on first call
+                    slideshowActive = true;
+
+                    if (slideshowData.length > 0) {
+                        // log.innerText = "SLIDESHOW: Showing first slide...";
+                        showNextSlide(); // Show first slide
+
+                        // Auto-start cycling with default 5 second interval
+                        if (slideshowInterval) clearInterval(slideshowInterval);
+                        slideshowInterval = setInterval(showNextSlide, 5000);
+
+                        // log.innerText = "SLIDESHOW: Auto-cycling " + slideshowData.length + " items (5s)";
+                    } else {
+                        // log.innerText = "SLIDESHOW ERROR: No nominees found in sheet";
+                    }
+                }).catch(function (err) {
+                    console.error('SLIDESHOW: Error loading nominees', err);
+                    // log.innerText = "SLIDESHOW ERROR: " + err;
+                });
+            });
+
+            broadcast.on(EVENT_TYPES.SHOW_SLIDESHOW, function (settings) {
+                if (!slideshowActive || !slideshowData || slideshowData.length === 0) return;
+
+                if (settings.active) {
+                    // Start auto-cycling
+                    if (slideshowInterval) clearInterval(slideshowInterval);
+                    slideshowInterval = setInterval(showNextSlide, settings.interval || 5000);
+                    // log.innerText = "SLIDESHOW: Auto-cycle ON (" + (settings.interval / 1000) + "s)";
+                } else {
+                    // Stop auto-cycling
+                    if (slideshowInterval) clearInterval(slideshowInterval);
+                    // log.innerText = "SLIDESHOW: Auto-cycle OFF";
+                }
+            });
+
+            broadcast.on(EVENT_TYPES.LD_RESET, function () {
+                stopSlideshow();
+                stopAllAudio();
+                showSect('section-waiting');
+            });
+
+            // --- BONUS WHEEL LOGIC (BÀN TAY NẮM CHẶT BÀN TAY) ---
+            var bonusWheel = new window.LuckyWheel('bonus-wheel-canvas');
+            var bwAnimating = false;
+            var defaultPenalties = [
+                "💪 Hít đất 10 cái",
+                "🎤 Hát 1 bài hát",
+                "🍺 Uống 1 ly bia"
+            ];
+            var currentPenalties = defaultPenalties.slice();
+
+            try {
+                var savedLocalPen = localStorage.getItem('VD_BW_PENALTIES');
+                if (savedLocalPen) {
+                    var parsedLocalPen = JSON.parse(savedLocalPen);
+                    if (Array.isArray(parsedLocalPen) && parsedLocalPen.length > 0) {
+                        currentPenalties = parsedLocalPen;
+                    }
+                }
+            } catch (e) {}
+
+            // Tạo danh sách các ô trên Vòng Quay Quà Tặng xen kẽ Quà, Lì xì và Hình phạt tùy chỉnh
+            function buildBwParticipants(penalties) {
+                var pens = (Array.isArray(penalties) && penalties.length > 0) ? penalties : defaultPenalties;
+                if (pens.length === 3) {
+                    return [
+                        "🎁 1 phần quà",
+                        "🧧 Lì xì",
+                        pens[0],
+                        "🧧 Lì xì",
+                        "🎁 1 phần quà",
+                        pens[1],
+                        "🧧 Lì xì",
+                        pens[2]
+                    ];
+                }
+                var list = [];
+                var rewards = ["🎁 1 phần quà", "🧧 Lì xì", "🧧 Lì xì", "🎁 1 phần quà", "🧧 Lì xì"];
+                var rIdx = 0;
+                for (var i = 0; i < pens.length; i++) {
+                    list.push(rewards[rIdx % rewards.length]);
+                    rIdx++;
+                    if (i % 2 === 0) {
+                        list.push(rewards[rIdx % rewards.length]);
+                        rIdx++;
+                    }
+                    list.push(pens[i]);
+                }
+                return list;
+            }
+
+            // Khởi tạo ngay Vòng Quay Quà Tặng khi mở ứng dụng
+            var lastAppliedPenaltiesJson = JSON.stringify(currentPenalties);
+            bonusWheel.setParticipants(buildBwParticipants(currentPenalties));
+
+            function applyPenaltiesIfChanged(newPenalties, forceRedraw) {
+                if (!Array.isArray(newPenalties) || newPenalties.length === 0) return;
+                var cleaned = newPenalties.map(function (p) { return String(p || '').trim(); }).filter(Boolean);
+                if (cleaned.length === 0) return;
+                var json = JSON.stringify(cleaned);
+                if (forceRedraw || json !== lastAppliedPenaltiesJson || !bonusWheel.participants || bonusWheel.participants.length === 0) {
+                    lastAppliedPenaltiesJson = json;
+                    currentPenalties = cleaned;
+                    try { localStorage.setItem('VD_BW_PENALTIES', json); } catch (e) {}
+                    if (!bonusWheel.isSpinning && !bwAnimating) {
+                        bonusWheel.setParticipants(buildBwParticipants(currentPenalties));
+                    }
+                }
+            }
+
+            // Đồng bộ tức thì nếu Admin và Main mở trên cùng trình duyệt
+            window.addEventListener('storage', function (e) {
+                if (e && e.key === 'VD_BW_PENALTIES' && e.newValue) {
+                    try {
+                        var parsed = JSON.parse(e.newValue);
+                        applyPenaltiesIfChanged(parsed, true);
+                    } catch (err) {}
+                }
+            });
+
+            // Tự động tách nền trắng bên ngoài cho 3 ảnh bàn tay để hiển thị trong suốt sắc nét
+            function removeOuterWhiteBg(imgEl) {
+                if (!imgEl || imgEl.dataset.cleaned === '1') return;
+                try {
+                    var w = imgEl.naturalWidth || 500;
+                    var h = imgEl.naturalHeight || 500;
+                    var maxDim = 520;
+                    if (w > maxDim || h > maxDim) {
+                        var scale = maxDim / Math.max(w, h);
+                        w = Math.round(w * scale);
+                        h = Math.round(h * scale);
+                    }
+                    var cvs = document.createElement('canvas');
+                    cvs.width = w;
+                    cvs.height = h;
+                    var c = cvs.getContext('2d');
+                    c.drawImage(imgEl, 0, 0, w, h);
+                    var imgData = c.getImageData(0, 0, w, h);
+                    var d = imgData.data;
+                    var visited = new Uint8Array(w * h);
+                    var queue = new Int32Array(w * h);
+                    var head = 0, tail = 0;
+
+                    function push(x, y) {
+                        var idx = y * w + x;
+                        if (!visited[idx]) {
+                            visited[idx] = 1;
+                            queue[tail++] = idx;
+                        }
+                    }
+
+                    for (var x = 0; x < w; x++) { push(x, 0); push(x, h - 1); }
+                    for (var y = 0; y < h; y++) { push(0, y); push(w - 1, y); }
+
+                    while (head < tail) {
+                        var pos = queue[head++];
+                        var p = pos * 4;
+                        var r = d[p], g = d[p + 1], b = d[p + 2];
+                        if (r > 232 && g > 232 && b > 232) {
+                            d[p + 3] = 0;
+                            var cx = pos % w;
+                            var cy = (pos - cx) / w;
+                            if (cx > 0) push(cx - 1, cy);
+                            if (cx < w - 1) push(cx + 1, cy);
+                            if (cy > 0) push(cx, cy - 1);
+                            if (cy < h - 1) push(cx, cy + 1);
+                        } else if (r > 195 && g > 195 && b > 195) {
+                            var lum = (r + g + b) / 3;
+                            d[p + 3] = Math.max(0, Math.min(255, Math.round((242 - lum) / 47 * 255)));
+                        }
+                    }
+                    c.putImageData(imgData, 0, 0);
+                    imgEl.dataset.cleaned = '1';
+                    imgEl.src = cvs.toDataURL('image/png');
+                } catch (err) {
+                    console.warn('Auto cutout skipped:', err);
+                }
+            }
+
+            ['img-hand-male', 'img-hand-female', 'img-hand-clasped'].forEach(function (id) {
+                var el = document.getElementById(id);
+                if (!el) return;
+                if (el.complete && el.naturalWidth > 0) {
+                    removeOuterWhiteBg(el);
+                } else {
+                    el.addEventListener('load', function () { removeOuterWhiteBg(el); });
+                }
+            });
+
+            var cachedBwConfig = { giftRemaining: 6, lixiRemaining: 10, penalties: currentPenalties };
+
+            // Đồng bộ cấu hình Quà, Lì xì & Hình phạt ngay khi khởi chạy
+            google.script.run.withSuccessHandler(function (cfg) {
+                if (cfg) {
+                    cachedBwConfig = cfg;
+                    if (cfg.penaltiesCustom && Array.isArray(cfg.penalties) && cfg.penalties.length > 0) {
+                        applyPenaltiesIfChanged(cfg.penalties, false);
+                    }
+                }
+            }).bw_getConfig();
+
+            // Nhận lệnh cập nhật danh sách Hình phạt trực tiếp từ Admin
+            broadcast.on('bw_update_penalties', function (data) {
+                if (data && Array.isArray(data.penalties) && data.penalties.length > 0) {
+                    applyPenaltiesIfChanged(data.penalties, true);
+                }
+            });
+
+            // Đảm bảo mã sự kiện 'bgm_control' luôn hoạt động ngay cả khi chưa cập nhật JavaScript.html
+            if (window.EVENT_TYPES) window.EVENT_TYPES.BGM_CONTROL = 'bgm_control';
+
+            // Nhận lệnh phát / dừng nhạc nền từ Admin (phát trực tiếp trên Main)
+            broadcast.on('bgm_control', function (data) {
+                var bgmEl = document.getElementById('audio-bgm');
+                if (!bgmEl || !data) return;
+
+                var cmd = data.command;
+                if (cmd === 'pause') {
+                    wantBgmPlaying = false;
+                    bgmEl.pause();
+                    return;
+                }
+
+                wantBgmPlaying = true;
+                bgmEl.muted = false;
+                bgmEl.loop = true;
+                bgmEl.volume = 1.0;
+                if (cmd === 'restart') {
+                    bgmEl.currentTime = 0;
+                }
+
+                var playPromise = bgmEl.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(function () {
+                        audioUnlocked = true;
+                    }).catch(function (err) {
+                        console.warn('Main BGM autoplay blocked:', err);
+                    });
+                }
+            });
+
+            function pickBonusWinnerIndex(participants, forcedTarget, giftRem, lixiRem) {
+                var i, lbl;
+                // 1. Nếu Admin có chỉ định ô trúng cho lượt quay này
+                if (forcedTarget && String(forcedTarget).trim() !== '') {
+                    var targetStr = String(forcedTarget).trim().toLowerCase();
+                    var forcedIndices = [];
+                    for (i = 0; i < participants.length; i++) {
+                        lbl = String(participants[i]).toLowerCase();
+                        if (lbl.indexOf(targetStr) > -1) {
+                            forcedIndices.push(i);
+                        }
+                    }
+                    if (forcedIndices.length > 0) {
+                        return forcedIndices[Math.floor(Math.random() * forcedIndices.length)];
+                    }
+                }
+
+                // 2. Chế độ Ngẫu nhiên: Loại bỏ ô Phần quà nếu hết quà, loại bỏ ô Lì xì nếu hết lì xì
+                var validIndices = [];
+                for (i = 0; i < participants.length; i++) {
+                    lbl = String(participants[i]);
+                    var isGift = (lbl.indexOf("🎁") > -1 || lbl.toLowerCase().indexOf("phần quà") > -1);
+                    var isLixi = (lbl.indexOf("🧧") > -1 || lbl.toLowerCase().indexOf("lì xì") > -1);
+
+                    if (isGift && giftRem <= 0) continue;
+                    if (isLixi && lixiRem <= 0) continue;
+
+                    validIndices.push(i);
+                }
+
+                if (validIndices.length > 0) {
+                    return validIndices[Math.floor(Math.random() * validIndices.length)];
+                }
+                return Math.floor(Math.random() * participants.length);
+            }
+
+            // --- ARTISTIC LUXURY FIREWORKS ENGINE (KHI 2 BÀN TAY CHẠM NHAU) ---
+            var bwFireworks = (function () {
+                var canvas = document.getElementById('bw-fireworks-canvas');
+                var ctx = canvas ? canvas.getContext('2d') : null;
+                var rockets = [];
+                var sparks = [];
+                var shockwaves = [];
+                var animId = null;
+                var showTimers = [];
+                var running = false;
+
+                var PALETTES = [
+                    ['#FFFFFF', '#FFF8C9', '#FFD700', '#FDB931', '#E6A100'], // Hoàng Kim Cúc Đại Đóa
+                    ['#FFFFFF', '#FFE6EE', '#FFACC5', '#FF6B9D', '#FFD700'], // Hồng Ngọc Trai & Vàng Kim
+                    ['#FFFDF0', '#FFD700', '#FF5C77', '#FF2E55', '#FFA800'], // Hồng Bảo Ngọc & Ánh Vàng
+                    ['#FFFFFF', '#FFF3B0', '#7BF1A8', '#56CFE1', '#FFD700']  // Tinh Vân Lục Bảo & Vàng
+                ];
+
+                function resize() {
+                    if (!canvas) return;
+                    canvas.width = window.innerWidth;
+                    canvas.height = window.innerHeight;
+                }
+                window.addEventListener('resize', resize);
+                resize();
+
+                function hexToRgb(hex) {
+                    var h = hex.replace('#', '');
+                    var num = parseInt(h, 16);
+                    return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
+                }
+
+                function drawStarGlint(x, y, radius, rgb, alpha, rot) {
+                    ctx.save();
+                    ctx.translate(x, y);
+                    ctx.rotate(rot);
+                    ctx.fillStyle = 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',' + alpha + ')';
+                    for (var k = 0; k < 2; k++) {
+                        ctx.beginPath();
+                        ctx.ellipse(0, 0, radius * 2.6, Math.max(0.6, radius * 0.28), k * Math.PI / 2, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    ctx.restore();
+                }
+
+                function spawnBurst(x, y, style, scale) {
+                    if (!ctx) return;
+                    var sc = scale || 1;
+                    var palette = PALETTES[Math.floor(Math.random() * PALETTES.length)];
+                    if (style === 'clasp') palette = PALETTES[0];
+
+                    // Vòng sóng ánh sáng mềm mại lan tỏa
+                    shockwaves.push({
+                        x: x,
+                        y: y,
+                        r: 6,
+                        maxR: (style === 'clasp' ? 230 : 170) * sc,
+                        alpha: 0.75,
+                        rgb: hexToRgb(palette[2])
+                    });
+
+                    // Lớp 1: Tia pháo hoa Liễu Rủ / Cúc Hoàng Gia có đuôi lụa dài
+                    var countOuter = Math.round((style === 'clasp' ? 68 : 54) * sc);
+                    for (var i = 0; i < countOuter; i++) {
+                        var angle = (Math.PI * 2 * i) / countOuter + (Math.random() - 0.5) * 0.08;
+                        var speed = (style === 'clasp' ? (4.5 + Math.random() * 6.2) : (3.8 + Math.random() * 5.4)) * sc;
+                        var colHex = palette[Math.floor(Math.random() * palette.length)];
+                        sparks.push({
+                            x: x,
+                            y: y,
+                            vx: Math.cos(angle) * speed,
+                            vy: Math.sin(angle) * speed,
+                            gravity: 0.046,
+                            drag: 0.968,
+                            alpha: 1,
+                            decay: 0.0085 + Math.random() * 0.006,
+                            size: 1.7 + Math.random() * 1.4,
+                            rgb: hexToRgb(colHex),
+                            trail: [],
+                            maxTrail: 9,
+                            twinkle: Math.random() < 0.55,
+                            glint: Math.random() < 0.22,
+                            rot: Math.random() * Math.PI
+                        });
+                    }
+
+                    // Lớp 2: Nhụy pháo hoa kim cương & hồng phấn bên trong tạo chiều sâu 3D
+                    var countInner = Math.round(28 * sc);
+                    for (var j = 0; j < countInner; j++) {
+                        var a2 = Math.random() * Math.PI * 2;
+                        var sp2 = (1.2 + Math.random() * 2.8) * sc;
+                        sparks.push({
+                            x: x,
+                            y: y,
+                            vx: Math.cos(a2) * sp2,
+                            vy: Math.sin(a2) * sp2,
+                            gravity: 0.025,
+                            drag: 0.96,
+                            alpha: 1,
+                            decay: 0.013 + Math.random() * 0.008,
+                            size: 1.3 + Math.random() * 1.1,
+                            rgb: hexToRgb(palette[0]),
+                            trail: [],
+                            maxTrail: 5,
+                            twinkle: true,
+                            glint: Math.random() < 0.35,
+                            rot: Math.random() * Math.PI
+                        });
+                    }
+                }
+
+                function launchCornerRocket(startX, startY, targetX, targetY, scale) {
+                    var frames = 34 + Math.floor(Math.random() * 10);
+                    rockets.push({
+                        x: startX,
+                        y: startY,
+                        sx: startX,
+                        sy: startY,
+                        tx: targetX,
+                        ty: targetY,
+                        step: 0,
+                        totalSteps: frames,
+                        scale: scale || 1,
+                        trail: []
+                    });
+                    startLoop();
+                }
+
+                function stepFrame() {
+                    if (!ctx || !canvas) return;
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.globalCompositeOperation = 'lighter';
+
+                    var i, r, s, sw;
+
+                    // 1. Vẽ các đường pháo bay lên từ các góc
+                    for (i = rockets.length - 1; i >= 0; i--) {
+                        r = rockets[i];
+                        r.step++;
+                        var t = r.step / r.totalSteps;
+                        var ease = 1 - Math.pow(1 - t, 2.4);
+                        r.x = r.sx + (r.tx - r.sx) * ease;
+                        r.y = r.sy + (r.ty - r.sy) * ease - Math.sin(t * Math.PI) * 35;
+
+                        r.trail.push({ x: r.x, y: r.y });
+                        if (r.trail.length > 8) r.trail.shift();
+
+                        if (r.trail.length > 1) {
+                            ctx.beginPath();
+                            ctx.moveTo(r.trail[0].x, r.trail[0].y);
+                            for (var k = 1; k < r.trail.length; k++) {
+                                ctx.lineTo(r.trail[k].x, r.trail[k].y);
+                            }
+                            ctx.strokeStyle = 'rgba(255, 230, 140, 0.75)';
+                            ctx.lineWidth = 2.2;
+                            ctx.stroke();
+                        }
+
+                        drawStarGlint(r.x, r.y, 2.4, { r: 255, g: 245, b: 190 }, 0.9, r.step * 0.15);
+
+                        if (r.step >= r.totalSteps) {
+                            spawnBurst(r.tx, r.ty, 'corner', r.scale);
+                            rockets.splice(i, 1);
+                        }
+                    }
+
+                    // 2. Vẽ vòng sóng hào quang
+                    for (i = shockwaves.length - 1; i >= 0; i--) {
+                        sw = shockwaves[i];
+                        sw.r += (sw.maxR - sw.r) * 0.11;
+                        sw.alpha *= 0.91;
+                        if (sw.alpha <= 0.02) {
+                            shockwaves.splice(i, 1);
+                            continue;
+                        }
+                        ctx.beginPath();
+                        ctx.arc(sw.x, sw.y, sw.r, 0, Math.PI * 2);
+                        ctx.strokeStyle = 'rgba(' + sw.rgb.r + ',' + sw.rgb.g + ',' + sw.rgb.b + ',' + (sw.alpha * 0.45) + ')';
+                        ctx.lineWidth = 1.8;
+                        ctx.stroke();
+                    }
+
+                    // 3. Vẽ các tia pháo hoa & hạt kim tuyến lấp lánh
+                    for (i = sparks.length - 1; i >= 0; i--) {
+                        s = sparks[i];
+                        s.trail.push({ x: s.x, y: s.y });
+                        if (s.trail.length > s.maxTrail) s.trail.shift();
+
+                        s.vx *= s.drag;
+                        s.vy = s.vy * s.drag + s.gravity;
+                        s.x += s.vx;
+                        s.y += s.vy;
+                        s.alpha -= s.decay;
+                        s.rot += 0.05;
+
+                        if (s.alpha <= 0.01) {
+                            sparks.splice(i, 1);
+                            continue;
+                        }
+
+                        var visAlpha = s.alpha;
+                        if (s.twinkle && s.alpha < 0.65) {
+                            visAlpha *= (0.45 + 0.55 * Math.abs(Math.sin(s.alpha * 42)));
+                        }
+
+                        // Đuôi lụa mờ dần nghệ thuật
+                        if (s.trail.length > 1) {
+                            ctx.beginPath();
+                            ctx.moveTo(s.trail[0].x, s.trail[0].y);
+                            for (var m = 1; m < s.trail.length; m++) {
+                                ctx.lineTo(s.trail[m].x, s.trail[m].y);
+                            }
+                            ctx.strokeStyle = 'rgba(' + s.rgb.r + ',' + s.rgb.g + ',' + s.rgb.b + ',' + (visAlpha * 0.55) + ')';
+                            ctx.lineWidth = s.size * 0.85;
+                            ctx.lineCap = 'round';
+                            ctx.stroke();
+                        }
+
+                        // Đầu hạt sáng
+                        ctx.beginPath();
+                        ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+                        ctx.fillStyle = 'rgba(255, 255, 245, ' + Math.min(1, visAlpha * 1.1) + ')';
+                        ctx.fill();
+
+                        // Ánh sao 4 cánh tinh tế trên các hạt chủ đạo
+                        if (s.glint && visAlpha > 0.25) {
+                            drawStarGlint(s.x, s.y, s.size * 1.15, s.rgb, visAlpha * 0.85, s.rot);
+                        }
+                    }
+
+                    if (rockets.length > 0 || sparks.length > 0 || shockwaves.length > 0) {
+                        animId = requestAnimationFrame(stepFrame);
+                    } else {
+                        running = false;
+                        animId = null;
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    }
+                }
+
+                function startLoop() {
+                    if (!running) {
+                        running = true;
+                        animId = requestAnimationFrame(stepFrame);
+                    }
+                }
+
+                function clearAllTimers() {
+                    while (showTimers.length > 0) {
+                        clearTimeout(showTimers.pop());
+                    }
+                }
+
+                return {
+                    // Kích hoạt màn trình diễn pháo hoa nghệ thuật khi 2 bàn tay chạm nhau
+                    startClaspShow: function (claspedEl) {
+                        resize();
+                        clearAllTimers();
+
+                        var W = canvas ? canvas.width : window.innerWidth;
+                        var H = canvas ? canvas.height : window.innerHeight;
+
+                        // 1. Pháo hoa bùng sáng ngay tại vị trí 2 bàn tay nắm nhau
+                        var cx = W * 0.5;
+                        var cy = H * 0.28;
+                        if (claspedEl) {
+                            var rect = claspedEl.getBoundingClientRect();
+                            if (rect.width > 0) {
+                                cx = rect.left + rect.width / 2;
+                                cy = rect.top + rect.height / 2;
+                            }
+                        }
+                        spawnBurst(cx, cy, 'clasp', 1.15);
+                        startLoop();
+
+                        // 2. Bắn đối xứng từ 4 góc màn hình (Trái trên, Phải trên, Trái dưới, Phải dưới)
+                        var cornerSalvos = [
+                            // Đợt 1: Ngay khi chạm tay - 2 góc trên bung nở đối xứng
+                            { delay: 40,  sx: 0, sy: H * 0.65, tx: W * 0.14, ty: H * 0.20, scale: 1.05 },
+                            { delay: 40,  sx: W, sy: H * 0.65, tx: W * 0.86, ty: H * 0.20, scale: 1.05 },
+                            // Đợt 2: 2 góc dưới - trung tâm hai bên sườn vòng quay
+                            { delay: 380, sx: 0, sy: H,        tx: W * 0.11, ty: H * 0.56, scale: 0.95 },
+                            { delay: 380, sx: W, sy: H,        tx: W * 0.89, ty: H * 0.56, scale: 0.95 },
+                            // Đợt 3: Vòm cao hai góc trên ôm lấy tiêu đề
+                            { delay: 1450, sx: W * 0.05, sy: H, tx: W * 0.20, ty: H * 0.16, scale: 1.1 },
+                            { delay: 1450, sx: W * 0.95, sy: H, tx: W * 0.80, ty: H * 0.16, scale: 1.1 },
+                            // Đợt 4: Hai góc dưới chếch lên nghệ thuật
+                            { delay: 2700, sx: 0, sy: H * 0.9,  tx: W * 0.15, ty: H * 0.44, scale: 1.0 },
+                            { delay: 2700, sx: W, sy: H * 0.9,  tx: W * 0.85, ty: H * 0.44, scale: 1.0 },
+                            // Đợt 5: Cao trào ở 4 góc trước khi vòng quay dừng
+                            { delay: 4100, sx: 0, sy: H * 0.75, tx: W * 0.12, ty: H * 0.22, scale: 1.05 },
+                            { delay: 4100, sx: W, sy: H * 0.75, tx: W * 0.88, ty: H * 0.22, scale: 1.05 },
+                            { delay: 4400, sx: W * 0.04, sy: H, tx: W * 0.18, ty: H * 0.66, scale: 0.95 },
+                            { delay: 4400, sx: W * 0.96, sy: H, tx: W * 0.82, ty: H * 0.66, scale: 0.95 }
+                        ];
+
+                        cornerSalvos.forEach(function (s) {
+                            showTimers.push(setTimeout(function () {
+                                launchCornerRocket(s.sx, s.sy, s.tx, s.ty, s.scale);
+                            }, s.delay));
+                        });
+                    },
+
+                    // Pháo hoa chúc mừng ở các góc khi chốt kết quả
+                    celebrateResult: function () {
+                        var W = canvas ? canvas.width : window.innerWidth;
+                        var H = canvas ? canvas.height : window.innerHeight;
+                        spawnBurst(W * 0.16, H * 0.26, 'corner', 1.1);
+                        spawnBurst(W * 0.84, H * 0.26, 'corner', 1.1);
+                        startLoop();
+                    },
+
+                    stop: function () {
+                        clearAllTimers();
+                        rockets = [];
+                        sparks = [];
+                        shockwaves = [];
+                        if (ctx && canvas) ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    }
+                };
+            })();
+
+            broadcast.on(EVENT_TYPES.BW_SHOW_HAND, function (data) {
+                stopSlideshow();
+                showSect('section-bonus-wheel');
+                bwAnimating = false;
+                bwFireworks.stop();
+
+                var hasPayloadPenalties = !!(data && Array.isArray(data.penalties) && data.penalties.length > 0);
+                if (hasPayloadPenalties) {
+                    applyPenaltiesIfChanged(data.penalties, true);
+                } else {
+                    bonusWheel.setParticipants(buildBwParticipants(currentPenalties));
+                }
+
+                var handLeft = document.getElementById('bw-hand-left');
+                var handRight = document.getElementById('bw-hand-right');
+                var handClasped = document.getElementById('bw-hand-clasped');
+
+                if (handClasped) handClasped.classList.remove('show');
+
+                if (handLeft && handRight) {
+                    handLeft.classList.remove('moving-to-top');
+                    handRight.classList.remove('moving-to-top');
+                    if (data && data.show) {
+                        handLeft.classList.add('show');
+                        handRight.classList.add('show');
+                    } else {
+                        handLeft.classList.remove('show');
+                        handRight.classList.remove('show');
+                    }
+                }
+
+                document.getElementById('bw-result-banner').classList.remove('show');
+
+                // Đồng bộ số lượng Quà, Lì xì & Hình phạt còn lại từ Backend
+                google.script.run.withSuccessHandler(function (cfg) {
+                    if (cfg) {
+                        cachedBwConfig = cfg;
+                        if (!hasPayloadPenalties && cfg.penaltiesCustom && Array.isArray(cfg.penalties) && cfg.penalties.length > 0) {
+                            applyPenaltiesIfChanged(cfg.penalties, false);
+                        }
+                    }
+                }).bw_getConfig();
+            });
+
+            broadcast.on(EVENT_TYPES.BW_START_SPIN, function (payload) {
+                if (bonusWheel.isSpinning || bwAnimating) return;
+                bwAnimating = true;
+
+                stopSlideshow();
+                showSect('section-bonus-wheel');
+
+                if (payload && Array.isArray(payload.penalties) && payload.penalties.length > 0) {
+                    lastAppliedPenaltiesJson = JSON.stringify(payload.penalties);
+                    currentPenalties = payload.penalties;
+                    try { localStorage.setItem('VD_BW_PENALTIES', lastAppliedPenaltiesJson); } catch (e) {}
+                    bonusWheel.setParticipants(buildBwParticipants(currentPenalties));
+                } else if (!bonusWheel.participants || bonusWheel.participants.length === 0) {
+                    bonusWheel.setParticipants(buildBwParticipants(currentPenalties));
+                }
+
+                var forcedTarget = (payload && payload.forcedTarget) ? String(payload.forcedTarget) : '';
+                var giftRem = (payload && payload.giftRemaining !== undefined) ? parseInt(payload.giftRemaining) : cachedBwConfig.giftRemaining;
+                var lixiRem = (payload && payload.lixiRemaining !== undefined) ? parseInt(payload.lixiRemaining) : cachedBwConfig.lixiRemaining;
+
+                var handLeft = document.getElementById('bw-hand-left');
+                var handRight = document.getElementById('bw-hand-right');
+                var handClasped = document.getElementById('bw-hand-clasped');
+                var resultBanner = document.getElementById('bw-result-banner');
+
+                if (resultBanner) resultBanner.classList.remove('show');
+                if (handClasped) handClasped.classList.remove('show');
+
+                // Bước 1: 2 bàn tay Nam (trái) và Nữ (phải) di chuyển cách điệu lên đỉnh vòng quay
+                if (handLeft && handRight) {
+                    handLeft.classList.add('show');
+                    handRight.classList.add('show');
+                    handLeft.classList.remove('moving-to-top');
+                    handRight.classList.remove('moving-to-top');
+                    void handLeft.offsetWidth; // Force reflow
+                    handLeft.classList.add('moving-to-top');
+                    handRight.classList.add('moving-to-top');
+                }
+
+                // Bước 2: Khi 2 bàn tay gặp nhau trên đỉnh vòng quay (~1.15s) -> Hiện bàn tay nắm chặt, Bắn pháo hoa nghệ thuật & Bắt đầu quay
+                setTimeout(function () {
+                    if (handLeft && handRight) {
+                        handLeft.classList.remove('show', 'moving-to-top');
+                        handRight.classList.remove('show', 'moving-to-top');
+                    }
+                    if (handClasped) {
+                        handClasped.classList.add('show');
+                    }
+
+                    // Kích hoạt pháo hoa nghệ thuật tại điểm chạm tay và 4 góc màn hình
+                    bwFireworks.startClaspShow(handClasped);
+
+                    // Chọn ô kết quả dựa theo Chỉ định hoặc Số lượng Quà/Lì xì còn lại
+                    var winnerIdx = pickBonusWinnerIndex(bonusWheel.participants, forcedTarget, giftRem, lixiRem);
+                    var winnerLabel = bonusWheel.participants[winnerIdx];
+
+                    bonusWheel.spinTo(winnerIdx, function () {
+                        bwAnimating = false;
+
+                        // Bước 3: Khi vòng quay dừng lại -> Bàn tay nắm nhau biến mất & Hiện kết quả kèm pháo hoa chúc mừng
+                        if (handClasped) {
+                            handClasped.classList.remove('show');
+                        }
+                        bwFireworks.celebrateResult();
+
+                        document.getElementById('bw-winner-text').innerText = winnerLabel;
+                        if (resultBanner) resultBanner.classList.add('show');
+
+                        // Ghi nhận kết quả để trừ số lượng Quà hoặc Lì xì trên Backend
+                        google.script.run.withSuccessHandler(function (updatedCfg) {
+                            if (updatedCfg) cachedBwConfig = updatedCfg;
+                        }).bw_recordSpinResult(winnerLabel);
+                    });
+                }, 1150);
+            });
+
+            // Đồng bộ chuẩn xác từ Server (không phụ thuộc đồng hồ máy tính hay phiên bản JavaScript.html)
+            broadcast.onStateChange = function (state) {
+                syncDot.classList.add('active');
+                setTimeout(function () { syncDot.classList.remove('active'); }, 500);
+
+                // Luôn kiểm tra và cập nhật danh sách hình phạt nếu có thay đổi từ SYSTEM_STATE
+                if (state && state.payload && Array.isArray(state.payload.penalties) && state.payload.penalties.length > 0) {
+                    applyPenaltiesIfChanged(state.payload.penalties, false);
+                } else {
+                    try {
+                        var lsPen = localStorage.getItem('VD_BW_PENALTIES');
+                        if (lsPen) applyPenaltiesIfChanged(JSON.parse(lsPen), false);
+                    } catch (e) {}
+                }
+            };
+
+            broadcast.startPolling = function () {
+                if (this.isPolling) return;
+                this.isPolling = true;
+                var self = this;
+                var initialLoaded = false;
+
+                function poll() {
+                    google.script.run
+                        .withSuccessHandler(function (state) {
+                            if (state) {
+                                if (self.onStateChange) self.onStateChange(state);
+                                if (!initialLoaded) {
+                                    initialLoaded = true;
+                                    self.lastTimestamp = state.timestamp || 0;
+                                } else if (state.timestamp > self.lastTimestamp) {
+                                    self.lastTimestamp = state.timestamp;
+                                    self.handleMessage(state);
+                                }
+                            } else {
+                                initialLoaded = true;
+                            }
+                            setTimeout(poll, self.pollInterval || 800);
+                        })
+                        .withFailureHandler(function (err) {
+                            console.warn('Sync Polling Error:', err);
+                            setTimeout(poll, 3000);
+                        })
+                        .getSystemState();
+                }
+                poll();
+            };
+
+            // Start polling AFTER all listeners are registered
+            console.log('Main Display: Registering all event listeners...');
+            console.log('Main Display: SHOW_ALL_LIST listener registered');
+            console.log('Main Display: Starting broadcast polling...');
+            broadcast.startPolling();
+            console.log('Main Display: Ready to receive events');
+        });
+    </script>
+</body>
+
+</html>

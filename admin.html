@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <base target="_top">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VINA DRAGON - Admin Panel</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+
+<body class="admin-body">
+    <div class="admin-layout">
+        <aside class="sidebar">
+            <h2 style="color: #FFD700; margin-bottom: 2rem; padding: 0 0.5rem; font-size: 1.4rem;">VINA DRAGON</h2>
+            <ul class="nav-menu">
+                <li class="nav-item active" onclick="switchTab(this, 'bonus')">🎁 Vòng Quay Quà Tặng</li>
+                <li class="nav-item" onclick="switchTab(this, 'dashboard')">📊 Dashboard</li>
+                <li class="nav-item" onclick="switchTab(this, 'lucky')">🎰 Vòng Quay May Mắn</li>
+                <li class="nav-item" onclick="switchTab(this, 'nominees')">👥 D/S Vinh Danh</li>
+            </ul>
+
+            <!-- Quick Music Control in Sidebar -->
+            <div style="margin-top: 2rem; padding: 12px; border-radius: 12px; background: rgba(255, 215, 0, 0.12); border: 1px solid rgba(255, 215, 0, 0.35);">
+                <div style="font-size: 0.8rem; font-weight: 700; color: #FFD700; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
+                    <span>🎵 NHẠC NỀN (MAIN)</span>
+                    <span id="bgm-sidebar-dot" style="color: #00ff88; font-size: 0.75rem;">● Tự động bật</span>
+                </div>
+                <div style="display: flex; gap: 6px;">
+                    <button class="btn" onclick="playBGM()"
+                        style="flex: 1; padding: 9px 6px; font-size: 0.78rem; background: linear-gradient(135deg, #FFD700, #FDB931); color: #000; border-radius: 8px;">
+                        ▶️ PHÁT
+                    </button>
+                    <button class="btn" onclick="pauseBGM()"
+                        style="flex: 1; padding: 9px 6px; font-size: 0.78rem; background: #dc3545; color: #fff; border-radius: 8px;">
+                        ⏸️ DỪNG
+                    </button>
+                </div>
+            </div>
+
+            <div style="margin-top: 1.5rem; text-align: center; font-size: 0.7rem; color: rgba(255, 235, 160, 0.8); letter-spacing: 1px; font-weight: 500; text-shadow: 0 0 6px rgba(255, 215, 0, 0.55);">
+                Mai Trường An - 0905012131
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <section id="tab-dashboard" class="tab-content" style="display: none;">
+                <div class="admin-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                    <div class="card">
+                        <h3>MÀN HÌNH ĐANG CHẠY</h3>
+                        <div id="live-monitor" class="monitor-panel">> Đang kết nối...</div>
+                        <p style="font-size: 0.8rem; color: #666; margin-top:10px;"><span id="sync-dot"
+                                style="color: green;">●</span> Đang đồng bộ với Main</p>
+                    </div>
+
+                    <div class="card">
+                        <h3>Điều Khiển Nhanh</h3>
+                        <div style="display: flex; gap: 10px; flex-direction: column;">
+                            <button class="btn btn-primary" onclick="triggerReset()" style="width: 100%;">TẮT VINH DANH
+                                / VỀ TRANG CHỜ</button>
+
+                            <div
+                                style="display: flex; align-items: center; gap: 10px; background: rgba(255,215,0,0.1); padding: 10px 15px; border-radius: 8px; border: 1px solid rgba(255,215,0,0.3); margin-top: 5px;">
+                                <label style="font-weight: bold; color: #8b0000; margin: 0; flex-grow: 1;">🎞️ Chế độ
+                                    Trình chiếu:</label>
+                                <input type="checkbox" id="slideshow-toggle" onchange="toggleSlideshow()"
+                                    style="width: 22px; height: 22px; cursor: pointer;">
+                                <input type="number" id="slideshow-interval" value="5" min="2" max="60"
+                                    style="width: 50px; text-align: center; border-radius: 4px; border: 1px solid #FFD700; background: #fff; color: #000; padding: 2px;">
+                                <span style="font-size: 0.8rem; color: #666;">giây</span>
+                            </div>
+
+                            <button class="btn btn-award" onclick="triggerAllListSlideshow()"
+                                style="width: 100%; margin-top: 10px; background: linear-gradient(135deg, #8b0000 0%, #b22222 100%); color: #FFD700; font-size: 0.9rem;">
+                                📽️ CHIẾU DANH SÁCH TỔNG
+                            </button>
+
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 2rem;">
+                    <h3>Bắt Đầu Vinh Danh</h3>
+                    <div style="margin: 1.5rem 0;">
+                        <label style="font-weight: 600;">Chọn Nhân Sự / Tập Thể từ Sheet:</label>
+                        <select id="select-awardee" class="form-control">
+                            <option value="">-- Đang nạp dữ liệu... --</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-award" id="btn-trigger" onclick="triggerAward()">HIỆN VINH DANH LÊN MÀN
+                        HÌNH</button>
+                </div>
+
+                <div class="card" style="margin-top: 2rem; border: 2px solid #FFD700; background: #fffdf0;">
+                    <h3 style="color: #8b0000;">✨ VIP HIỆU ỨNG (REAL-TIME)</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px;">
+                        <div>
+                            <label style="font-size: 0.85rem; font-weight: 600;">Số lượng hạt bay (Main): <span
+                                    id="val-count">150</span></label>
+                            <input type="range" min="0" max="500" value="150" class="form-control"
+                                oninput="updateFX('count', this.value)">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.85rem; font-weight: 600;">Kích thước hạt: <span
+                                    id="val-size">2</span>px</label>
+                            <input type="range" min="1" max="10" step="0.5" value="2" class="form-control"
+                                oninput="updateFX('size', this.value)">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.85rem; font-weight: 600;">Mật độ lấp lánh (Honor): <span
+                                    id="val-glitter-dens">200</span></label>
+                            <input type="range" min="50" max="600" step="10" value="200" class="form-control"
+                                style="direction: rtl;" oninput="updateFX('glitter-dens', this.value)">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.85rem; font-weight: 600;">Cỡ hạt vinh danh: <span
+                                    id="val-glitter-size">1.5</span>px</label>
+                            <input type="range" min="0.5" max="5" step="0.1" value="1.5" class="form-control"
+                                oninput="updateFX('glitter-size', this.value)">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="tab-lucky" class="tab-content" style="display: none;">
+                <div class="admin-grid"
+                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+                    <div class="card">
+                        <h3>MÀN HÌNH ĐANG CHẠY</h3>
+                        <div id="live-monitor-lucky" class="monitor-panel">> Đang kết nối...</div>
+                        <p style="font-size: 0.8rem; color: #666; margin-top:10px;"><span id="sync-dot-lucky"
+                                style="color: green;">●</span> Đang đồng bộ với Main</p>
+                    </div>
+
+                    <div class="card">
+                        <h3>Điều Khiển Nhanh</h3>
+                        <p style="margin: 10px 0; color: #666; font-size: 0.9rem;">Dùng để dừng quay hoặc thoát màn hình
+                            quay số.</p>
+                        <button class="btn btn-primary" onclick="triggerReset()" style="width: 100%;">TOÁT VÒNG QUAY /
+                            VỀ TRANG CHỜ</button>
+                    </div>
+                </div>
+
+                <div class="card" style="border-left: 5px solid #FFD700;">
+                    <h3>🎰 CÀI ĐẶT GIẢI THƯỞNG</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                        <div>
+                            <label style="font-size: 0.8rem; font-weight: bold;">Giải Đặc Biệt:</label>
+                            <input type="text" id="prize-special" class="form-control" placeholder="Tên quà..."
+                                value="Xe máy Honda SH">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.8rem; font-weight: bold;">Giải Nhất:</label>
+                            <input type="text" id="prize-1st" class="form-control" placeholder="Tên quà..."
+                                value="Tivi Sony 65 inch">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.8rem; font-weight: bold;">Giải Nhì:</label>
+                            <input type="text" id="prize-2nd" class="form-control" placeholder="Tên quà..."
+                                value="Tủ lạnh Samsung">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.8rem; font-weight: bold;">Giải Ba:</label>
+                            <input type="text" id="prize-3rd" class="form-control" placeholder="Tên quà..."
+                                value="Lò vi sóng">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.8rem; font-weight: bold;">Giải Khuyến Khích:</label>
+                            <input type="text" id="prize-cons" class="form-control" placeholder="Tên quà..."
+                                value="Bộ ấm chén Minh Long">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 2rem; background: #fffcf0; border: 2px solid #FFD700;">
+                    <h3>🔥 ĐIỀU KHIỂN QUAY SỐ</h3>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button class="btn btn-award"
+                            style="flex: 1; min-width: 150px; background: #8b0000; color: white;"
+                            onclick="triggerLD('LD_RESET')">LÀM MỚI VÒNG QUAY</button>
+                        <select id="current-prize-tier" class="form-control"
+                            style="flex: 2; min-width: 150px; margin-top: 0;">
+                            <option value="Giải Đặc Biệt">Quay Giải Đặc Biệt</option>
+                            <option value="Giải Nhất">Quay Giải Nhất</option>
+                            <option value="Giải Nhì">Quay Giải Nhì</option>
+                            <option value="Giải Ba">Quay Giải Ba</option>
+                            <option value="Giải Khuyến Khích">Quay Giải Khuyến Khích</option>
+                        </select>
+                        <input type="number" id="ld-pool-size-v2" class="form-control" value="40" min="1" max="1000"
+                            style="flex: 1; min-width: 80px; margin-top: 0; text-align: center;"
+                            title="Số người tham gia (1 - N)">
+                        <button class="btn btn-award" style="flex: 2; min-width: 200px;" onclick="triggerLD('SPIN')">BẮT
+                            ĐẦU QUAY SỐ</button>
+                        <button class="btn btn-primary" style="flex: 1;" onclick="triggerLD('STOP')">CHỐT KẾT
+                            QUẢ</button>
+                    </div>
+                    <div id="ld-status"
+                        style="margin-top: 15px; font-family: monospace; color: #8b0000; font-weight: bold;">> Chẵn sàng
+                        quay số (1-40)</div>
+                </div>
+            </section>
+
+            <section id="tab-nominees" class="tab-content" style="display: none;">
+                <div class="card">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h3>Dữ Liệu Vinh Danh</h3>
+                        <button class="btn btn-primary" onclick="refreshData()" style="padding: 8px 15px;">Làm
+                            Mới</button>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Loại</th>
+                                <th>Tên</th>
+                                <th>Bộ Phận</th>
+                                <th>Lệnh</th>
+                            </tr>
+                        </thead>
+                        <tbody id="nominees-list">
+                            <tr>
+                                <td colspan="4" style="text-align: center;">Đang đồng bộ...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            <section id="tab-bonus" class="tab-content active">
+                <div class="admin-grid"
+                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+                    <div class="card">
+                        <h3>MÀN HÌNH ĐANG CHẠY</h3>
+                        <div id="live-monitor-bonus" class="monitor-panel">> Màn hình: VÒNG QUAY QUÀ TẶNG</div>
+                        <p style="font-size: 0.8rem; color: #666; margin-top:10px;"><span id="sync-dot-bonus"
+                                style="color: green;">●</span> Đang đồng bộ với Main</p>
+                    </div>
+
+                    <div class="card">
+                        <h3>Điều Khiển Nhanh & Nhạc Nền (Main)</h3>
+                        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn btn-award" onclick="playBGM()"
+                                    style="flex: 1; background: linear-gradient(135deg, #198754 0%, #0f5132 100%); color: #fff; font-size: 0.9rem;">
+                                    ▶️ PHÁT NHẠC
+                                </button>
+                                <button class="btn btn-award" onclick="pauseBGM()"
+                                    style="flex: 1; background: linear-gradient(135deg, #dc3545 0%, #8b0000 100%); color: #fff; font-size: 0.9rem;">
+                                    ⏸️ DỪNG NHẠC
+                                </button>
+                                <button class="btn btn-primary" onclick="restartBGM()" title="Phát lại từ đầu"
+                                    style="padding: 12px 16px; background: #333; color: #fff;">
+                                    🔄
+                                </button>
+                            </div>
+                            <button class="btn btn-primary" onclick="triggerReset()" style="width: 100%;">THOÁT VÒNG QUAY /
+                                VỀ TRANG CHỜ</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="border: 2px solid #FFD700; background: #fffcf0;">
+                    <h3>🎁 ĐIỀU KHIỂN: BÀN TAY NẮM CHẶT BÀN TAY</h3>
+
+                    <!-- Hàng nút Phát / Dừng Nhạc Nền cho Main -->
+                    <div style="margin: 15px 0; padding: 14px 16px; background: linear-gradient(135deg, #fff5f7 0%, #fffdf0 100%); border: 2px solid #d4145a; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 1.6rem;">🎶</span>
+                            <div>
+                                <div style="font-weight: 800; color: #8b0000; font-size: 0.95rem;">NHẠC NỀN MAIN: BÀN TAY NẮM CHẶT BÀN TAY</div>
+                                <div id="bgm-sub-status" style="font-size: 0.8rem; color: #198754; font-weight: bold;">🟢 Tự động bật khi mở Main — Dùng nút bên cạnh để Dừng / Phát</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                            <button class="btn" onclick="playBGM()"
+                                style="padding: 12px 20px; font-size: 0.92rem; background: linear-gradient(135deg, #198754 0%, #0f5132 100%); color: #fff; border-radius: 10px; box-shadow: 0 4px 10px rgba(25,135,84,0.3);">
+                                ▶️ PHÁT NHẠC
+                            </button>
+                            <button class="btn" onclick="pauseBGM()"
+                                style="padding: 12px 20px; font-size: 0.92rem; background: linear-gradient(135deg, #dc3545 0%, #8b0000 100%); color: #fff; border-radius: 10px; box-shadow: 0 4px 10px rgba(220,53,69,0.3);">
+                                ⏸️ DỪNG NHẠC
+                            </button>
+                            <button class="btn btn-primary" onclick="restartBGM()" title="Phát lại nhạc nền từ đầu"
+                                style="padding: 12px 16px; font-size: 0.9rem; background: #333; color: #fff; border-radius: 10px;">
+                                🔄 Từ đầu
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Chỉ định kết quả lượt quay -->
+                    <div style="margin: 15px 0; padding: 15px; background: #fff; border: 1px solid #f0d78c; border-radius: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                            <label style="font-weight: 800; color: #8b0000; font-size: 0.95rem;">
+                                🎯 CHỈ ĐỊNH KẾT QUẢ LƯỢT QUAY TIẾP THEO:
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem; color: #444; cursor: pointer;">
+                                <input type="checkbox" id="bw-auto-reset-force" checked style="width: 16px; height: 16px; cursor: pointer;">
+                                Tự về "Ngẫu nhiên" sau mỗi lượt quay
+                            </label>
+                        </div>
+                        <select id="bw-force-select" class="form-control" style="margin-top: 8px; font-weight: 700; color: #1a1a2e; border-color: #FFD700;">
+                            <option value="">🎲 Ngẫu nhiên (Tự động khóa ô Quà / Lì xì khi hết số lượng)</option>
+                            <option value="1 phần quà">🎯 Chỉ định vào ô: 🎁 1 phần quà</option>
+                            <option value="Lì xì">🎯 Chỉ định vào ô: 🧧 Lì xì</option>
+                            <option value="Hít đất 10 cái">🎯 Chỉ định vào ô: 💪 Hít đất 10 cái</option>
+                            <option value="Hát 1 bài hát">🎯 Chỉ định vào ô: 🎤 Hát 1 bài hát</option>
+                            <option value="Uống 1 ly bia">🎯 Chỉ định vào ô: 🍺 Uống 1 ly bia</option>
+                        </select>
+                    </div>
+
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
+                        <button class="btn btn-award" style="flex: 1; background: #8b0000; color: white;"
+                            onclick="triggerBW('HAND')">1. HIỆN 2 BÀN TAY (NAM - NỮ)</button>
+
+                        <button class="btn btn-award" style="flex: 1; background: #FFD700; color: #000;"
+                            onclick="triggerBW('SPIN')">2. NẮM TAY & BẮT ĐẦU QUAY</button>
+                    </div>
+                    <div id="bw-status-line" style="margin-top: 12px; font-family: monospace; font-weight: bold; color: #8b0000;">
+                        > Sẵn sàng điều khiển vòng quay
+                    </div>
+                </div>
+
+                <!-- Thiết lập Quà & Lì xì -->
+                <div class="card" style="border-left: 5px solid #8b0000;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
+                        <h3 style="margin: 0; color: #8b0000;">⚙️ THIẾT LẬP SỐ LƯỢNG QUÀ TẶNG & LÌ XÌ</h3>
+                        <button class="btn btn-primary" style="padding: 8px 15px; font-size: 0.8rem; background: #555;"
+                            onclick="resetBWGifts()">🔄 RESET ĐÃ PHÁT VỀ 0</button>
+                    </div>
+
+                    <div class="admin-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                        <!-- Cột 1: Phần Quà -->
+                        <div style="padding: 15px; border-radius: 12px; background: #fff9f0; border: 1px solid #f3d19e;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <h4 style="color: #8b0000; font-size: 1.05rem;">🎁 PHẦN QUÀ</h4>
+                                <span id="bw-gift-badge" style="padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; background: #d4edda; color: #155724;">Còn quà</span>
+                            </div>
+
+                            <div style="margin: 12px 0; padding: 10px 12px; background: #fff; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <div style="font-size: 0.8rem; color: #666;">Còn lại / Tổng số:</div>
+                                    <div style="font-size: 1.5rem; font-weight: 900; color: #8b0000;">
+                                        <span id="bw-gift-rem">6</span> <small style="font-size: 0.95rem; color: #555;">/ <span id="bw-gift-total">6</span></small>
+                                    </div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 0.8rem; color: #666;">Đã quay trúng:</div>
+                                    <div style="font-size: 1.2rem; font-weight: bold; color: #333;"><span id="bw-gift-count">0</span></div>
+                                </div>
+                            </div>
+
+                            <div style="margin-top: 10px;">
+                                <label style="font-size: 0.8rem; font-weight: 600; color: #444;">Thiết lập tổng số Phần quà ban đầu:</label>
+                                <div style="display: flex; gap: 8px; margin-top: 5px;">
+                                    <input type="number" id="bw-input-gift-total" class="form-control" value="6" min="0" style="margin-top: 0; text-align: center; font-weight: bold;">
+                                    <button class="btn btn-primary" style="padding: 8px 14px; font-size: 0.8rem; white-space: nowrap;" onclick="saveBWTotals()">LƯU</button>
+                                    <button class="btn btn-award" style="padding: 8px 12px; font-size: 0.8rem; width: auto; white-space: nowrap;" onclick="addBWExtra('gift', 1)">+1 Quà</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cột 2: Lì xì -->
+                        <div style="padding: 15px; border-radius: 12px; background: #fff5f5; border: 1px solid #f5c2c7;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <h4 style="color: #b22222; font-size: 1.05rem;">🧧 LÌ XÌ MAY MẮN</h4>
+                                <span id="bw-lixi-badge" style="padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; background: #d4edda; color: #155724;">Còn lì xì</span>
+                            </div>
+
+                            <div style="margin: 12px 0; padding: 10px 12px; background: #fff; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <div style="font-size: 0.8rem; color: #666;">Còn lại / Tổng số:</div>
+                                    <div style="font-size: 1.5rem; font-weight: 900; color: #b22222;">
+                                        <span id="bw-lixi-rem">10</span> <small style="font-size: 0.95rem; color: #555;">/ <span id="bw-lixi-total">10</span></small>
+                                    </div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 0.8rem; color: #666;">Đã quay trúng:</div>
+                                    <div style="font-size: 1.2rem; font-weight: bold; color: #333;"><span id="bw-lixi-used">0</span></div>
+                                </div>
+                            </div>
+
+                            <div style="margin-top: 10px;">
+                                <label style="font-size: 0.8rem; font-weight: 600; color: #444;">Thiết lập tổng số Lì xì ban đầu:</label>
+                                <div style="display: flex; gap: 8px; margin-top: 5px;">
+                                    <input type="number" id="bw-input-lixi-total" class="form-control" value="10" min="0" style="margin-top: 0; text-align: center; font-weight: bold;">
+                                    <button class="btn btn-primary" style="padding: 8px 14px; font-size: 0.8rem; white-space: nowrap;" onclick="saveBWTotals()">LƯU</button>
+                                </div>
+                            </div>
+
+                            <!-- Cơ chế tăng thêm số lượng Lì xì phát sinh -->
+                            <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed #e0a8ae;">
+                                <label style="font-size: 0.8rem; font-weight: 700; color: #8b0000;">➕ Tăng thêm Lì xì phát sinh:</label>
+                                <div style="display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap;">
+                                    <button class="btn btn-award" style="flex: 1; padding: 6px 10px; font-size: 0.8rem;" onclick="addBWExtra('lixi', 1)">+1</button>
+                                    <button class="btn btn-award" style="flex: 1; padding: 6px 10px; font-size: 0.8rem;" onclick="addBWExtra('lixi', 3)">+3</button>
+                                    <button class="btn btn-award" style="flex: 1; padding: 6px 10px; font-size: 0.8rem;" onclick="addBWExtra('lixi', 5)">+5</button>
+                                    <input type="number" id="bw-input-lixi-extra" class="form-control" value="2" min="1" style="width: 65px; margin-top: 0; padding: 6px; text-align: center;">
+                                    <button class="btn btn-primary" style="padding: 6px 12px; font-size: 0.78rem; background: #8b0000;" onclick="addBWCustomLixi()">+ THÊM</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p style="margin-top: 12px; font-size: 0.84rem; color: #555; font-style: italic;">
+                        * Khi số lượng Còn lại của <strong>Phần quà</strong> hoặc <strong>Lì xì</strong> về <strong>0</strong>, vòng quay sẽ tự động không dừng vào ô đó nữa (trừ khi bạn chủ động chọn Chỉ định ở trên hoặc bấm cộng thêm số lượng phát sinh).
+                    </p>
+                </div>
+
+                <!-- Thiết lập / Chỉnh sửa các Hình phạt -->
+                <div class="card" style="border-left: 5px solid #d4145a; background: #fffcfd;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+                        <div>
+                            <h3 style="margin: 0; color: #8b0000;">🎭 TÙY CHỈNH CÁC Ô HÌNH PHẠT TRÊN VÒNG QUAY</h3>
+                            <p style="margin: 4px 0 0 0; font-size: 0.82rem; color: #666;">Sửa nội dung các hình phạt bên dưới rồi bấm <strong>LƯU & CẬP NHẬT VÒNG QUAY</strong> để áp dụng ngay lên màn hình chính.</p>
+                        </div>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <button class="btn btn-primary" style="padding: 8px 14px; font-size: 0.8rem; background: #555;"
+                                onclick="resetDefaultPenalties()">🔄 Mặc định</button>
+                            <button class="btn btn-award" style="padding: 8px 14px; font-size: 0.8rem; width: auto;"
+                                onclick="addPenaltyRow()">➕ Thêm hình phạt</button>
+                        </div>
+                    </div>
+
+                    <div id="bw-penalties-list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-top: 12px;">
+                        <!-- Các ô nhập hình phạt sẽ được render tại đây -->
+                    </div>
+
+                    <div style="margin-top: 15px; display: flex; justify-content: flex-end; gap: 10px; align-items: center;">
+                        <span id="bw-penalty-status" style="font-size: 0.85rem; font-weight: bold; color: #198754;"></span>
+                        <button class="btn" onclick="savePenalties()"
+                            style="background: linear-gradient(135deg, #d4145a 0%, #8b0000 100%); color: #FFD700; padding: 12px 24px; font-size: 0.9rem; border-radius: 10px; box-shadow: 0 4px 12px rgba(139,0,0,0.3);">
+                            💾 LƯU & CẬP NHẬT LÊN VÒNG QUAY
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="/gas-shim.js"></script>
+    <script src="/core.js"></script>
+    <script>
+        var dataManager, broadcast;
+
+        window.switchTab = function (el, id) {
+            document.querySelectorAll('.tab-content').forEach(function (t) { t.style.display = 'none'; });
+            document.querySelectorAll('.nav-item').forEach(function (n) { n.classList.remove('active'); });
+            document.getElementById('tab-' + id).style.display = 'block';
+            el.classList.add('active');
+            refreshData();
+            if (id === 'bonus') refreshBWCount();
+        };
+
+        var statePenaltiesSynced = false;
+        function updateLiveMonitor(state) {
+            var m = document.getElementById('live-monitor');
+            var ml = document.getElementById('live-monitor-lucky');
+            if (!state) return;
+
+            if (!statePenaltiesSynced && state.payload && Array.isArray(state.payload.penalties) && state.payload.penalties.length > 0) {
+                statePenaltiesSynced = true;
+                if (!getSavedLocalPenalties()) {
+                    saveLocalPenalties(state.payload.penalties);
+                    renderPenaltiesEditor(state.payload.penalties);
+                }
+            }
+
+            var txt = "> Trạng thái: " + state.action;
+            if (state.action === EVENT_TYPES.RESET_DISPLAY) txt = "> Màn hình: TRANG CHỜ";
+            if (state.action === EVENT_TYPES.SHOW_INDIVIDUAL_AWARD) txt = "> Đang hiện CÁ NHÂN: " + (state.payload.Name || "---");
+            if (state.action === EVENT_TYPES.SHOW_TEAM_AWARD) txt = "> Đang hiện TẬP THỂ: " + (state.payload.Name || "---");
+            if (state.action === EVENT_TYPES.LD_START_SPIN) txt = "> ĐANG QUAY: " + (state.payload.prize || "---");
+            if (state.action === EVENT_TYPES.LD_SHOW_WINNER) txt = "> Đã chốt người thắng!";
+            if (state.action === EVENT_TYPES.SHOW_ALL_LIST) txt = "> ĐANG CHIẾU DANH SÁCH TỔNG";
+            if (state.action === EVENT_TYPES.BW_SHOW_HAND) txt = "> ĐANG HIỆN BÀN TAY QUÀ TẶNG";
+            if (state.action === EVENT_TYPES.BW_START_SPIN) txt = "> VÒNG QUAY QUÀ TẶNG ĐANG QUAY...";
+            if (state.action === 'bw_update_penalties') txt = "> ĐÃ CẬP NHẬT HÌNH PHẠT LÊN VÒNG QUAY MAIN";
+            if (state.action === EVENT_TYPES.BGM_CONTROL || state.action === 'bgm_control') {
+                txt = (state.payload && state.payload.command === 'pause')
+                    ? "> Nhạc nền: ĐÃ TẠM DỪNG"
+                    : "> Nhạc nền: ĐANG PHÁT 🎵";
+            }
+
+            if (m) m.innerText = txt;
+            if (ml) ml.innerText = txt;
+            var mb = document.getElementById('live-monitor-bonus');
+            if (mb) mb.innerText = txt;
+        }
+
+        window.triggerReset = function () {
+            broadcast.send(EVENT_TYPES.RESET_DISPLAY);
+            alert('Đã gửi lệnh quay về trang chờ!');
+        };
+
+        window.triggerAward = function () {
+            var btn = document.getElementById('btn-trigger');
+            var id = document.getElementById('select-awardee').value;
+            if (!id) { alert('Vui lòng chọn nhân sự!'); return; }
+
+            btn.disabled = true;
+            btn.textContent = 'ĐANG GỬI LỆNH...';
+
+            dataManager.getNominees().then(function (list) {
+                var item = list.filter(function (i) { return String(i.ID) === String(id); })[0];
+                if (item) {
+                    var action = (String(item.Type).toLowerCase().indexOf('tập thể') > -1)
+                        ? EVENT_TYPES.SHOW_TEAM_AWARD
+                        : EVENT_TYPES.SHOW_INDIVIDUAL_AWARD;
+
+                    broadcast.send(action, item);
+                    alert('Đã gửi lệnh hiện vinh danh cho: ' + item.Name);
+                }
+            }).catch(function (err) {
+                alert('Lỗi: ' + err);
+            }).finally(function () {
+                btn.disabled = false;
+                btn.textContent = 'HIỆN VINH DANH LÊN MÀN HÌNH';
+            });
+        };
+
+        function refreshData() {
+            dataManager.getNominees(true).then(function (list) {
+                var select = document.getElementById('select-awardee');
+                if (select) {
+                    select.innerHTML = '<option value="">-- Chọn Nhân Sự / Tập Thể --</option>' +
+                        list.map(function (i) { return '<option value="' + i.ID + '">' + i.Name + ' (' + (i.Dept || '---') + ')</option>'; }).join('');
+                }
+                var tbody = document.getElementById('nominees-list');
+                if (tbody) {
+                    tbody.innerHTML = list.map(function (i) {
+                        return '<tr><td><small>' + (i.Type || 'Cá nhân') + '</small></td>' +
+                            '<td><strong>' + i.Name + '</strong></td>' +
+                            '<td>' + (i.Dept || '-') + '</td>' +
+                            '<td><button class="btn btn-primary" style="padding:4px 8px; font-size:0.7rem;" onclick="triggerDirect(\'' + i.ID + '\')">HIỆN</button></td></tr>';
+                    }).join('');
+                }
+            });
+        }
+
+        window.triggerDirect = function (id) {
+            var select = document.getElementById('select-awardee');
+            if (select) select.value = id;
+            window.triggerAward();
+        };
+
+        var fxTimeout;
+        window.updateFX = function (key, val) {
+            document.getElementById('val-' + key).innerText = val;
+            clearTimeout(fxTimeout);
+            fxTimeout = setTimeout(function () {
+                var settings = {
+                    count: document.querySelector('input[oninput*="count"]').value,
+                    size: document.querySelector('input[oninput*="size"]').value,
+                    glitterDens: document.querySelector('input[oninput*="glitter-dens"]').value,
+                    glitterSize: document.querySelector('input[oninput*="glitter-size"]').value
+                };
+                broadcast.send(EVENT_TYPES.UPDATE_SETTINGS, settings);
+            }, 100);
+        };
+
+        window.toggleSlideshow = function () {
+            var active = document.getElementById('slideshow-toggle').checked;
+            var interval = document.getElementById('slideshow-interval').value * 1000;
+            broadcast.send(EVENT_TYPES.SHOW_SLIDESHOW, { active: active, interval: interval });
+        };
+
+        window.triggerAllListSlideshow = function () {
+            console.log('triggerAllListSlideshow called');
+            console.log('broadcast object:', broadcast);
+            console.log('EVENT_TYPES:', EVENT_TYPES);
+            console.log('EVENT_TYPES.SHOW_ALL_LIST:', EVENT_TYPES.SHOW_ALL_LIST);
+
+            if (!broadcast) {
+                console.error('Broadcast not initialized!');
+                alert('Hệ thống chưa sẵn sàng, vui lòng thử lại sau!');
+                return;
+            }
+
+            console.log('Sending SHOW_ALL_LIST event...');
+            broadcast.send(EVENT_TYPES.SHOW_ALL_LIST);
+            alert('Đã bắt đầu chiếu danh sách tổng!');
+        };
+
+        window.triggerSummary = function () {
+            broadcast.send(EVENT_TYPES.SHOW_ALL);
+        };
+
+        window.triggerLD = function (action) {
+            var status = document.getElementById('ld-status');
+            var tier = document.getElementById('current-prize-tier').value;
+            var prizeName = "";
+            if (tier === "Giải Đặc Biệt") prizeName = document.getElementById('prize-special').value;
+            if (tier === "Giải Nhất") prizeName = document.getElementById('prize-1st').value;
+            if (tier === "Giải Nhì") prizeName = document.getElementById('prize-2nd').value;
+            if (tier === "Giải Ba") prizeName = document.getElementById('prize-3rd').value;
+            if (tier === "Giải Khuyến Khích") prizeName = document.getElementById('prize-cons').value;
+
+            if (action === 'LD_RESET') {
+                if (confirm('Xóa sạch lịch sử trúng giải và bắt đầu lại từ đầu?')) {
+                    var poolSize = document.getElementById('ld-pool-size-v2').value || 40;
+                    google.script.run.withSuccessHandler(function () {
+                        broadcast.send(EVENT_TYPES.LD_RESET);
+                        status.innerText = "> Đã đặt lại vòng quay (1-" + poolSize + ")";
+                    }).ld_clearDraw();
+                }
+                return;
+            }
+
+            if (action === 'SPIN') {
+                var poolSizeInput = document.getElementById('ld-pool-size-v2');
+                var poolSize = parseInt(poolSizeInput.value) || 40;
+                console.log('SPIN V2 Triggered. PoolSize parsed:', poolSize);
+
+                google.script.run.withSuccessHandler(function (pool) {
+                    console.log('Pool received from backend V2:', pool);
+                    if (pool.length === 0) {
+                        alert('Đã hết số để quay!');
+                        return;
+                    }
+                    broadcast.send(EVENT_TYPES.LD_START_SPIN, {
+                        pool: pool,
+                        prize: tier,
+                        prizeName: prizeName,
+                        quantity: 1
+                    });
+                    status.innerText = "> Đang quay: " + tier + " (" + prizeName + ") trong dải 1-" + poolSize;
+                }).ld_getRemainingPool_V2(poolSize);
+            }
+
+            if (action === 'STOP') {
+                var poolSizeInput = document.getElementById('ld-pool-size-v2');
+                var poolSize = parseInt(poolSizeInput.value) || 40;
+                google.script.run.withSuccessHandler(function (pool) {
+                    if (pool.length === 0) {
+                        alert('Không còn số nào để quay!');
+                        return;
+                    }
+                    var idx = Math.floor(Math.random() * pool.length);
+                    var winnerNum = pool[idx];
+
+                    broadcast.send(EVENT_TYPES.LD_SHOW_WINNER, { winnerNum: winnerNum, prizeName: prizeName });
+                    status.innerText = "> Đã chốt người thắng: Số " + String(winnerNum).padStart(2, '0');
+                }).ld_getRemainingPool_V2(poolSize);
+            }
+        };
+
+        var DEFAULT_PENALTIES = [
+            '💪 Hít đất 10 cái',
+            '🎤 Hát 1 bài hát',
+            '🍺 Uống 1 ly bia'
+        ];
+        var currentBWConfig = {
+            giftTotal: 6,
+            giftUsed: 0,
+            giftRemaining: 6,
+            lixiTotal: 10,
+            lixiUsed: 0,
+            lixiRemaining: 10,
+            penalties: DEFAULT_PENALTIES.slice()
+        };
+        var penaltiesInitialized = false;
+
+        function getSavedLocalPenalties() {
+            try {
+                var raw = localStorage.getItem('VD_BW_PENALTIES');
+                if (raw) {
+                    var parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+                }
+            } catch (e) {}
+            return null;
+        }
+
+        function saveLocalPenalties(list) {
+            try {
+                localStorage.setItem('VD_BW_PENALTIES', JSON.stringify(list));
+            } catch (e) {}
+        }
+
+        function renderPenaltiesEditor(penalties) {
+            var list = (Array.isArray(penalties) && penalties.length > 0) ? penalties : DEFAULT_PENALTIES.slice();
+            currentBWConfig.penalties = list.slice();
+            var container = document.getElementById('bw-penalties-list');
+            if (!container) return;
+
+            container.innerHTML = list.map(function (item, idx) {
+                var safeVal = String(item || '').replace(/"/g, '&quot;');
+                return '<div style="display: flex; align-items: center; gap: 6px; background: #fff; padding: 10px 12px; border-radius: 10px; border: 1px solid #f0c2d1;">' +
+                    '<span style="font-weight: 800; color: #8b0000; font-size: 0.82rem; white-space: nowrap;">Phạt #' + (idx + 1) + ':</span>' +
+                    '<input type="text" class="form-control bw-penalty-input" value="' + safeVal + '" ' +
+                    'style="margin-top: 0; padding: 8px 10px; font-weight: 700; color: #1a1a2e; flex: 1;" placeholder="Nhập tên hình phạt...">' +
+                    (list.length > 1
+                        ? '<button class="btn" onclick="removePenaltyRow(' + idx + ')" title="Xóa hình phạt này" style="padding: 6px 10px; background: #fee2e2; color: #b91c1c; font-size: 0.8rem; border-radius: 6px;">✕</button>'
+                        : '') +
+                    '</div>';
+            }).join('');
+
+            updateForceSelectOptions(list);
+        }
+
+        function collectPenaltiesFromInputs() {
+            var inputs = document.querySelectorAll('.bw-penalty-input');
+            var list = [];
+            inputs.forEach(function (inp) {
+                var v = String(inp.value || '').trim();
+                if (v) list.push(v);
+            });
+            return list.length > 0 ? list : DEFAULT_PENALTIES.slice();
+        }
+
+        function updateForceSelectOptions(penalties) {
+            var sel = document.getElementById('bw-force-select');
+            if (!sel) return;
+            var prevVal = sel.value;
+            var list = (Array.isArray(penalties) && penalties.length > 0) ? penalties : DEFAULT_PENALTIES;
+
+            var html = '<option value="">🎲 Ngẫu nhiên (Tự động khóa ô Quà / Lì xì khi hết số lượng)</option>' +
+                '<option value="1 phần quà">🎯 Chỉ định vào ô: 🎁 1 phần quà</option>' +
+                '<option value="Lì xì">🎯 Chỉ định vào ô: 🧧 Lì xì</option>';
+
+            list.forEach(function (p) {
+                var safeVal = String(p).replace(/"/g, '&quot;');
+                html += '<option value="' + safeVal + '">🎯 Chỉ định vào ô: ' + p + '</option>';
+            });
+
+            sel.innerHTML = html;
+            sel.value = prevVal;
+            if (sel.selectedIndex === -1) sel.value = '';
+        }
+
+        window.addPenaltyRow = function () {
+            var current = collectPenaltiesFromInputs();
+            current.push('🍻 Uống 1 ly bia');
+            renderPenaltiesEditor(current);
+        };
+
+        window.removePenaltyRow = function (idx) {
+            var current = collectPenaltiesFromInputs();
+            if (current.length <= 1) {
+                alert('Cần giữ lại ít nhất 1 hình phạt trên vòng quay!');
+                return;
+            }
+            current.splice(idx, 1);
+            renderPenaltiesEditor(current);
+        };
+
+        window.resetDefaultPenalties = function () {
+            renderPenaltiesEditor(DEFAULT_PENALTIES.slice());
+            window.savePenalties();
+        };
+
+        window.savePenalties = function () {
+            var list = collectPenaltiesFromInputs();
+            currentBWConfig.penalties = list.slice();
+            saveLocalPenalties(list);
+            renderPenaltiesEditor(list);
+
+            var statusSpan = document.getElementById('bw-penalty-status');
+            if (statusSpan) {
+                statusSpan.innerText = '✅ Đã cập nhật lên vòng quay!';
+                setTimeout(function () { statusSpan.innerText = ''; }, 3500);
+            }
+
+            var statusEl = document.getElementById('bw-status-line');
+            if (statusEl) {
+                statusEl.innerText = '> Đã cập nhật ' + list.length + ' hình phạt mới lên Vòng Quay Main!';
+            }
+
+            // Gửi trực tiếp sang Main để cập nhật vòng quay ngay lập tức
+            if (broadcast) {
+                broadcast.send('bw_update_penalties', {
+                    penalties: list,
+                    updatedAt: Date.now()
+                });
+            }
+
+            // Lưu bền vững trên Backend
+            try {
+                if (typeof google !== 'undefined' && google.script && google.script.run) {
+                    var runner = google.script.run.withSuccessHandler(function (cfg) {
+                        if (cfg) renderBWConfigUI(cfg);
+                    }).withFailureHandler(function (err) {
+                        console.warn('bw_setPenalties fallback to SYSTEM_STATE:', err);
+                    });
+                    if (runner && typeof runner.bw_setPenalties === 'function') {
+                        runner.bw_setPenalties(list);
+                    }
+                }
+            } catch (e) {
+                console.warn('bw_setPenalties skipped:', e);
+            }
+        };
+
+        // --- ĐIỀU KHIỂN NHẠC NỀN (PHÁT TRÊN MÀN HÌNH MAIN) ---
+        var isBgmPlaying = true;
+
+        function updateBGMButtonsUI(isPlaying) {
+            isBgmPlaying = !!isPlaying;
+            var dotSidebar = document.getElementById('bgm-sidebar-dot');
+            var subStatus = document.getElementById('bgm-sub-status');
+            var statusEl = document.getElementById('bw-status-line');
+
+            if (isPlaying) {
+                if (dotSidebar) {
+                    dotSidebar.innerText = '● Đang phát (Main)';
+                    dotSidebar.style.color = '#00ff88';
+                }
+                if (subStatus) {
+                    subStatus.innerText = '🟢 Đang phát nhạc nền trên màn hình chính (Main)...';
+                    subStatus.style.color = '#198754';
+                    subStatus.style.fontWeight = 'bold';
+                }
+                if (statusEl) statusEl.innerText = '> 🎵 Đã gửi lệnh PHÁT nhạc nền sang màn hình Main';
+            } else {
+                if (dotSidebar) {
+                    dotSidebar.innerText = '● Đã dừng';
+                    dotSidebar.style.color = '#ff6b6b';
+                }
+                if (subStatus) {
+                    subStatus.innerText = '⏸️ Đã tạm dừng nhạc nền trên màn hình Main';
+                    subStatus.style.color = '#dc3545';
+                    subStatus.style.fontWeight = 'bold';
+                }
+                if (statusEl) statusEl.innerText = '> ⏸️ Đã gửi lệnh DỪNG nhạc nền sang màn hình Main';
+            }
+        }
+
+        if (window.EVENT_TYPES) window.EVENT_TYPES.BGM_CONTROL = 'bgm_control';
+
+        window.playBGM = function () {
+            updateBGMButtonsUI(true);
+            if (broadcast) broadcast.send('bgm_control', { command: 'play' });
+        };
+
+        window.pauseBGM = function () {
+            updateBGMButtonsUI(false);
+            if (broadcast) broadcast.send('bgm_control', { command: 'pause' });
+        };
+
+        window.toggleBGM = function () {
+            if (!isBgmPlaying) {
+                window.playBGM();
+            } else {
+                window.pauseBGM();
+            }
+        };
+
+        window.restartBGM = function () {
+            updateBGMButtonsUI(true);
+            if (broadcast) broadcast.send('bgm_control', { command: 'restart' });
+        };
+
+        function renderBWConfigUI(cfg) {
+            if (!cfg) return;
+            var prevPenalties = currentBWConfig.penalties;
+            currentBWConfig = cfg;
+            if (!cfg.penaltiesCustom && Array.isArray(prevPenalties) && prevPenalties.length > 0) {
+                currentBWConfig.penalties = prevPenalties;
+            }
+
+            var elGiftRem = document.getElementById('bw-gift-rem');
+            var elGiftTotal = document.getElementById('bw-gift-total');
+            var elGiftUsed = document.getElementById('bw-gift-count');
+            var elGiftInput = document.getElementById('bw-input-gift-total');
+            var elGiftBadge = document.getElementById('bw-gift-badge');
+
+            if (elGiftRem) elGiftRem.innerText = cfg.giftRemaining;
+            if (elGiftTotal) elGiftTotal.innerText = cfg.giftTotal;
+            if (elGiftUsed) elGiftUsed.innerText = cfg.giftUsed;
+            if (elGiftInput && document.activeElement !== elGiftInput) elGiftInput.value = cfg.giftTotal;
+            if (elGiftBadge) {
+                if (cfg.giftRemaining > 0) {
+                    elGiftBadge.innerText = 'Còn ' + cfg.giftRemaining + ' quà';
+                    elGiftBadge.style.background = '#d4edda';
+                    elGiftBadge.style.color = '#155724';
+                } else {
+                    elGiftBadge.innerText = 'Đã hết (Đã khóa ô Quà)';
+                    elGiftBadge.style.background = '#f8d7da';
+                    elGiftBadge.style.color = '#721c24';
+                }
+            }
+
+            var elLixiRem = document.getElementById('bw-lixi-rem');
+            var elLixiTotal = document.getElementById('bw-lixi-total');
+            var elLixiUsed = document.getElementById('bw-lixi-used');
+            var elLixiInput = document.getElementById('bw-input-lixi-total');
+            var elLixiBadge = document.getElementById('bw-lixi-badge');
+
+            if (elLixiRem) elLixiRem.innerText = cfg.lixiRemaining;
+            if (elLixiTotal) elLixiTotal.innerText = cfg.lixiTotal;
+            if (elLixiUsed) elLixiUsed.innerText = cfg.lixiUsed;
+            if (elLixiInput && document.activeElement !== elLixiInput) elLixiInput.value = cfg.lixiTotal;
+            if (elLixiBadge) {
+                if (cfg.lixiRemaining > 0) {
+                    elLixiBadge.innerText = 'Còn ' + cfg.lixiRemaining + ' lì xì';
+                    elLixiBadge.style.background = '#d4edda';
+                    elLixiBadge.style.color = '#155724';
+                } else {
+                    elLixiBadge.innerText = 'Đã hết (Đã khóa ô Lì xì)';
+                    elLixiBadge.style.background = '#f8d7da';
+                    elLixiBadge.style.color = '#721c24';
+                }
+            }
+
+            if (!penaltiesInitialized) {
+                penaltiesInitialized = true;
+                var localSaved = getSavedLocalPenalties();
+                var initialPens = (cfg.penaltiesCustom && Array.isArray(cfg.penalties) && cfg.penalties.length > 0)
+                    ? cfg.penalties
+                    : (localSaved || (Array.isArray(cfg.penalties) && cfg.penalties.length > 0 ? cfg.penalties : DEFAULT_PENALTIES.slice()));
+                saveLocalPenalties(initialPens);
+                renderPenaltiesEditor(initialPens);
+            }
+        }
+
+        window.triggerBW = function (action) {
+            var statusEl = document.getElementById('bw-status-line');
+            var activePenalties = collectPenaltiesFromInputs();
+            if (action === 'HAND') {
+                broadcast.send(EVENT_TYPES.BW_SHOW_HAND, { show: true, penalties: activePenalties });
+                if (statusEl) statusEl.innerText = "> Đã hiện 2 bàn tay Nam - Nữ trên màn hình chính";
+                refreshBWCount();
+            } else if (action === 'SPIN') {
+                var forceSelect = document.getElementById('bw-force-select');
+                var autoReset = document.getElementById('bw-auto-reset-force');
+                var forcedTarget = forceSelect ? forceSelect.value : '';
+
+                broadcast.send(EVENT_TYPES.BW_START_SPIN, {
+                    forcedTarget: forcedTarget,
+                    giftRemaining: currentBWConfig.giftRemaining,
+                    lixiRemaining: currentBWConfig.lixiRemaining,
+                    penalties: activePenalties
+                });
+
+                if (statusEl) {
+                    statusEl.innerText = forcedTarget
+                        ? ("> Đang quay (CHỈ ĐỊNH vào ô: " + forcedTarget + ")...")
+                        : ("> Đang quay NGẪU NHIÊN (Quà còn: " + currentBWConfig.giftRemaining + ", Lì xì còn: " + currentBWConfig.lixiRemaining + ")...");
+                }
+
+                if (forceSelect && autoReset && autoReset.checked && forcedTarget !== '') {
+                    forceSelect.value = '';
+                }
+
+                // Cập nhật lại số lượng Quà & Lì xì sau khi vòng quay dừng
+                setTimeout(refreshBWCount, 9200);
+            }
+        };
+
+        window.refreshBWCount = function () {
+            google.script.run.withSuccessHandler(function (cfg) {
+                renderBWConfigUI(cfg);
+            }).bw_getConfig();
+        };
+
+        window.saveBWTotals = function () {
+            var giftVal = parseInt(document.getElementById('bw-input-gift-total').value);
+            var lixiVal = parseInt(document.getElementById('bw-input-lixi-total').value);
+            google.script.run.withSuccessHandler(function (cfg) {
+                renderBWConfigUI(cfg);
+                var statusEl = document.getElementById('bw-status-line');
+                if (statusEl) statusEl.innerText = "> Đã lưu thiết lập: Tổng Quà = " + cfg.giftTotal + ", Tổng Lì xì = " + cfg.lixiTotal;
+            }).bw_setTotals(giftVal, lixiVal);
+        };
+
+        window.addBWExtra = function (type, amount) {
+            google.script.run.withSuccessHandler(function (cfg) {
+                renderBWConfigUI(cfg);
+                var statusEl = document.getElementById('bw-status-line');
+                var label = (type === 'gift') ? 'Phần quà' : 'Lì xì';
+                if (statusEl) statusEl.innerText = "> Đã cộng thêm +" + amount + " " + label + " phát sinh!";
+            }).bw_addExtra(type, amount);
+        };
+
+        window.addBWCustomLixi = function () {
+            var extraInput = document.getElementById('bw-input-lixi-extra');
+            var amount = parseInt(extraInput ? extraInput.value : 1) || 1;
+            window.addBWExtra('lixi', amount);
+        };
+
+        window.resetBWGifts = function () {
+            if (confirm('Đặt lại số lượng ĐÃ PHÁT của cả Phần Quà và Lì Xì về 0?')) {
+                google.script.run.withSuccessHandler(function (cfg) {
+                    renderBWConfigUI(cfg);
+                    var statusEl = document.getElementById('bw-status-line');
+                    if (statusEl) statusEl.innerText = "> Đã reset số lượng Quà & Lì xì đã phát về 0";
+                }).bw_resetUsage();
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', function () {
+            dataManager = new window.DataManager();
+            broadcast = new window.BroadcastManager();
+
+            // Tự động đính kèm danh sách hình phạt hiện tại vào mọi gói tin gửi sang Main
+            var origSend = broadcast.send.bind(broadcast);
+            broadcast.send = function (type, payload) {
+                var data = (payload && typeof payload === 'object') ? payload : {};
+                if (!Array.isArray(data.penalties) || data.penalties.length === 0) {
+                    data.penalties = collectPenaltiesFromInputs();
+                }
+                return origSend(type, data);
+            };
+
+            broadcast.onStateChange = updateLiveMonitor;
+            broadcast.startPolling();
+            renderPenaltiesEditor(getSavedLocalPenalties() || DEFAULT_PENALTIES.slice());
+            refreshData();
+            refreshBWCount();
+        });
+    </script>
+</body>
+
+</html>
