@@ -992,3 +992,233 @@
       background-position: 300px 600px;
     }
   }
+
+  /* --- RESPONSIVE MAIN DISPLAY CHO ĐIỆN THOẠI & TABLET --- */
+  @media (max-width: 1024px) {
+    .bonus-wheel-wrapper,
+    .wheel-wrapper {
+      width: min(68vw, 48vh);
+      height: min(68vw, 48vh);
+    }
+
+    .bw-hand-left {
+      left: -140px;
+    }
+
+    .bw-hand-right {
+      right: -140px;
+    }
+
+    .bw-side-hand {
+      width: 140px;
+      height: 140px;
+    }
+
+    .hand-icon-side {
+      width: 125px;
+      height: 125px;
+    }
+
+    .hand-ripple {
+      width: 75px;
+      height: 75px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    #section-waiting {
+      top: 10%;
+      padding: 0 14px;
+    }
+
+    .top-logo {
+      width: 95px;
+      margin-top: 0;
+      margin-bottom: 1rem;
+    }
+
+    .display-title {
+      white-space: normal;
+      font-size: clamp(1.15rem, 4.8vw, 1.65rem);
+      line-height: 1.35;
+      max-width: 94vw;
+    }
+
+    .shimmer-text {
+      font-size: clamp(1.2rem, 4.8vw, 2rem);
+      line-height: 1.35;
+      padding: 0 8px;
+    }
+
+    .location-date {
+      font-size: 0.9rem;
+      margin-top: 0.6rem;
+    }
+
+    #section-bonus-wheel {
+      justify-content: flex-start;
+      padding-top: 5vh;
+    }
+
+    .bw-title-container {
+      margin-top: 0;
+      margin-bottom: 16px;
+      padding: 0 8px;
+    }
+
+    .bw-arched-svg {
+      width: 96vw;
+      max-height: 85px;
+    }
+
+    .bw-subtitle {
+      font-size: clamp(1.3rem, 5.2vw, 1.85rem) !important;
+      margin-top: -10px;
+    }
+
+    .bonus-wheel-wrapper,
+    .wheel-wrapper {
+      width: min(76vw, 44vh);
+      height: min(76vw, 44vh);
+      margin: 8px auto 0 auto;
+    }
+
+    #bonus-wheel-canvas,
+    #lucky-wheel-canvas {
+      border-width: 7px;
+    }
+
+    .wheel-pointer {
+      top: -14px;
+      width: 32px;
+      height: 32px;
+    }
+
+    /* Đặt 2 bàn tay gọn ở 2 góc dưới vòng quay để không tràn màn hình điện thoại */
+    .bw-side-hand {
+      top: 92%;
+      width: 96px;
+      height: 96px;
+    }
+
+    .bw-hand-left {
+      left: -14px;
+    }
+
+    .bw-hand-right {
+      right: -14px;
+    }
+
+    .hand-icon-side {
+      width: 86px;
+      height: 86px;
+    }
+
+    .hand-ripple {
+      width: 54px;
+      height: 54px;
+    }
+
+    @keyframes moveLeftHandToTop {
+      0% {
+        left: -14px;
+        top: 92%;
+        transform: translateY(-50%) scale(1) rotate(0deg);
+        opacity: 1;
+      }
+      55% {
+        left: -10px;
+        top: 25%;
+        transform: translateY(-50%) scale(1.05) rotate(20deg);
+        opacity: 1;
+      }
+      90% {
+        left: 28%;
+        top: 4%;
+        transform: translateY(-50%) scale(0.95) rotate(32deg);
+        opacity: 1;
+      }
+      100% {
+        left: 34%;
+        top: 4%;
+        transform: translateY(-50%) scale(0.6) rotate(35deg);
+        opacity: 0;
+      }
+    }
+
+    @keyframes moveRightHandToTop {
+      0% {
+        right: -14px;
+        top: 92%;
+        transform: translateY(-50%) scale(1) rotate(0deg);
+        opacity: 1;
+      }
+      55% {
+        right: -10px;
+        top: 25%;
+        transform: translateY(-50%) scale(1.05) rotate(-20deg);
+        opacity: 1;
+      }
+      90% {
+        right: 28%;
+        top: 4%;
+        transform: translateY(-50%) scale(0.95) rotate(-32deg);
+        opacity: 1;
+      }
+      100% {
+        right: 34%;
+        top: 4%;
+        transform: translateY(-50%) scale(0.6) rotate(-35deg);
+        opacity: 0;
+      }
+    }
+
+    .bw-clasped-container {
+      width: 140px;
+      height: 110px;
+      top: 12px;
+    }
+
+    .hand-icon-clasped {
+      width: 120px;
+    }
+
+    .clasped-glow-burst {
+      width: 130px;
+      height: 130px;
+    }
+
+    .bw-result-banner {
+      width: 90vw;
+      max-width: 360px;
+      padding: 1rem 1.2rem;
+      font-size: clamp(1.15rem, 4.8vw, 1.65rem);
+      border-radius: 18px;
+      text-align: center;
+      line-height: 1.35;
+    }
+
+    #ld-prize-tier {
+      font-size: clamp(1.8rem, 7vw, 2.6rem) !important;
+    }
+
+    #ld-prize-name {
+      font-size: clamp(1rem, 4vw, 1.35rem) !important;
+      padding: 6px 18px !important;
+      margin-bottom: 1rem !important;
+    }
+
+    .winner-banner {
+      min-width: 0;
+      width: 90vw;
+      padding: 1.1rem 1.2rem;
+    }
+
+    #winner-main-text {
+      font-size: clamp(1.4rem, 5.5vw, 2rem) !important;
+    }
+
+    #winner-sub-text {
+      font-size: clamp(0.95rem, 3.8vw, 1.2rem) !important;
+    }
+  }
