@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VINA DRAGON - Admin Panel</title>
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="/styles.css?v=9">
+    <link rel="stylesheet" href="/styles.css?v=10">
 </head>
 
 <body class="admin-body">
@@ -303,7 +303,7 @@
                             <option value="1 phần quà">🎯 Chỉ định vào ô: 🎁 1 phần quà</option>
                             <option value="Lì xì">🎯 Chỉ định vào ô: 🧧 Lì xì</option>
                             <option value="Nắm tai nhún nhảy 5 cái">🎯 Chỉ định vào ô: 💪 Nắm tai nhún nhảy 5 cái</option>
-                            <option value="Hát 1 bài hát">🎯 Chỉ định vào ô: 🎤 Hát 1 bài hát</option>
+                            <option value="Vũ điệu lái xe">🎯 Chỉ định vào ô: 💃 Vũ điệu lái xe</option>
                             <option value="Uống 1 ly bia">🎯 Chỉ định vào ô: 🍺 Uống 1 ly bia</option>
                         </select>
                     </div>
@@ -437,8 +437,8 @@
         </main>
     </div>
 
-    <script src="/gas-shim.js?v=9"></script>
-    <script src="/core.js?v=9"></script>
+    <script src="/gas-shim.js?v=10"></script>
+    <script src="/core.js?v=10"></script>
     <script>
         var dataManager, broadcast;
 
@@ -653,7 +653,7 @@
 
         var DEFAULT_PENALTIES = [
             '💪 Nắm tai nhún nhảy 5 cái',
-            '🎤 Hát 1 bài hát',
+            '💃 Vũ điệu lái xe',
             '🍺 Uống 1 ly bia'
         ];
         function normalizePenaltiesList(list) {
@@ -663,9 +663,6 @@
                 var low = s.toLowerCase();
                 if (low.indexOf('hít đất 10 cái') > -1 || low.indexOf('thụt dầu 10 cái') > -1) {
                     return '💪 Nắm tai nhún nhảy 5 cái';
-                }
-                if (low.indexOf('vũ điệu lái xe') > -1) {
-                    return '🎤 Hát 1 bài hát';
                 }
                 return s;
             }).filter(Boolean);
@@ -681,8 +678,30 @@
         };
         var penaltiesInitialized = false;
 
+        function migrateLocalPenaltiesDefaultOnce() {
+            try {
+                if (localStorage.getItem('VD_BW_DEF_V') === 'v_drive_2') return;
+                var raw = localStorage.getItem('VD_BW_PENALTIES');
+                if (raw) {
+                    var parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        var upgraded = parsed.map(function (p) {
+                            var s = String(p || '').trim();
+                            var low = s.toLowerCase();
+                            if (low === '🎤 hát 1 bài hát' || low === 'hát 1 bài hát') return '💃 Vũ điệu lái xe';
+                            return s;
+                        });
+                        localStorage.setItem('VD_BW_PENALTIES', JSON.stringify(upgraded));
+                    }
+                }
+                localStorage.setItem('VD_BW_DEF_V', 'v_drive_2');
+            } catch (e) {}
+        }
+        migrateLocalPenaltiesDefaultOnce();
+
         function getSavedLocalPenalties() {
             try {
+                migrateLocalPenaltiesDefaultOnce();
                 var raw = localStorage.getItem('VD_BW_PENALTIES');
                 if (raw) {
                     var parsed = JSON.parse(raw);
@@ -935,8 +954,20 @@
                     : (localSaved || (Array.isArray(cfg.penalties) && cfg.penalties.length > 0 ? cfg.penalties : DEFAULT_PENALTIES.slice()));
                 saveLocalPenalties(initialPens);
                 renderPenaltiesEditor(initialPens);
+            } else if (cfg && cfg.penaltiesCustom && Array.isArray(cfg.penalties) && cfg.penalties.length > 0) {
+                var activeEl = document.activeElement;
+                var isEditingPenalty = activeEl && activeEl.classList && activeEl.classList.contains('bw-penalty-input');
+                var currentInputs = collectPenaltiesFromInputs();
+                if (!isEditingPenalty && JSON.stringify(cfg.penalties) !== JSON.stringify(currentInputs)) {
+                    saveLocalPenalties(cfg.penalties);
+                    renderPenaltiesEditor(cfg.penalties);
+                }
             }
         }
+
+        window.addEventListener('vd-bw-config-updated', function (ev) {
+            if (ev && ev.detail) renderBWConfigUI(ev.detail);
+        });
 
         window.triggerBW = function (action) {
             var statusEl = document.getElementById('bw-status-line');

@@ -8,7 +8,7 @@
     <title>VINA DRAGON - Main Display</title>
     <link rel="icon" href="data:,">
     <script>if (location.search.indexOf("page=admin") > -1 || location.search.indexOf("view=admin") > -1) { location.replace("/admin"); }</script>
-    <link rel="stylesheet" href="/styles.css?v=9">
+    <link rel="stylesheet" href="/styles.css?v=10">
     <style>
         #sync-indicator {
             position: fixed;
@@ -380,8 +380,8 @@
         </div>
     </div>
 
-    <script src="/gas-shim.js?v=9"></script>
-    <script src="/core.js?v=9"></script>
+    <script src="/gas-shim.js?v=10"></script>
+    <script src="/core.js?v=10"></script>
 
     <script>
         // Global Error Boundary
@@ -849,7 +849,7 @@
             }
             var defaultPenalties = [
                 "💪 Nắm tai nhún nhảy 5 cái",
-                "🎤 Hát 1 bài hát",
+                "💃 Vũ điệu lái xe",
                 "🍺 Uống 1 ly bia"
             ];
             function normalizePenaltiesList(list) {
@@ -860,13 +860,29 @@
                     if (low.indexOf('hít đất 10 cái') > -1 || low.indexOf('thụt dầu 10 cái') > -1) {
                         return "💪 Nắm tai nhún nhảy 5 cái";
                     }
-                    if (low.indexOf('vũ điệu lái xe') > -1) {
-                        return "🎤 Hát 1 bài hát";
-                    }
                     return s;
                 }).filter(Boolean);
             }
             var currentPenalties = defaultPenalties.slice();
+
+            try {
+                if (localStorage.getItem('VD_BW_DEF_V') !== 'v_drive_2') {
+                    var rawOldPen = localStorage.getItem('VD_BW_PENALTIES');
+                    if (rawOldPen) {
+                        var parsedOldPen = JSON.parse(rawOldPen);
+                        if (Array.isArray(parsedOldPen) && parsedOldPen.length > 0) {
+                            var upgradedPen = parsedOldPen.map(function (p) {
+                                var s = String(p || '').trim();
+                                var low = s.toLowerCase();
+                                if (low === '🎤 hát 1 bài hát' || low === 'hát 1 bài hát') return "💃 Vũ điệu lái xe";
+                                return s;
+                            });
+                            localStorage.setItem('VD_BW_PENALTIES', JSON.stringify(upgradedPen));
+                        }
+                    }
+                    localStorage.setItem('VD_BW_DEF_V', 'v_drive_2');
+                }
+            } catch (e) {}
 
             try {
                 var savedLocalPen = localStorage.getItem('VD_BW_PENALTIES');
@@ -1009,15 +1025,24 @@
 
             var cachedBwConfig = { giftRemaining: 6, lixiRemaining: 10, penalties: currentPenalties };
 
-            // Đồng bộ cấu hình Quà, Lì xì & Hình phạt ngay khi khởi chạy
-            google.script.run.withSuccessHandler(function (cfg) {
-                if (cfg) {
-                    cachedBwConfig = cfg;
-                    if (cfg.penaltiesCustom && Array.isArray(cfg.penalties) && cfg.penalties.length > 0) {
-                        applyPenaltiesIfChanged(cfg.penalties, false);
-                    }
+            // Đồng bộ cấu hình Quà, Lì xì & Hình phạt ngay khi khởi chạy và khi Cloud cập nhật ngầm
+            function applyBwConfigSnapshot(cfg, forceRedraw) {
+                if (!cfg) return;
+                cachedBwConfig = cfg;
+                if (cfg.penaltiesCustom && Array.isArray(cfg.penalties) && cfg.penalties.length > 0) {
+                    applyPenaltiesIfChanged(cfg.penalties, !!forceRedraw);
                 }
+            }
+
+            google.script.run.withSuccessHandler(function (cfg) {
+                applyBwConfigSnapshot(cfg, false);
             }).bw_getConfig();
+
+            window.addEventListener('vd-bw-config-updated', function (ev) {
+                if (ev && ev.detail) {
+                    applyBwConfigSnapshot(ev.detail, true);
+                }
+            });
 
             // Nhận lệnh cập nhật danh sách Hình phạt trực tiếp từ Admin
             broadcast.on('bw_update_penalties', function (data) {
@@ -1563,13 +1588,21 @@
                     google.script.run
                         .withSuccessHandler(function (state) {
                             if (state) {
-                                if (self.onStateChange) self.onStateChange(state);
                                 if (!initialLoaded) {
                                     initialLoaded = true;
                                     self.lastTimestamp = state.timestamp || 0;
-                                } else if (state.timestamp > self.lastTimestamp) {
-                                    self.lastTimestamp = state.timestamp;
-                                    self.handleMessage(state);
+                                    if (self.onStateChange) self.onStateChange(state);
+                                    if (!(state.payload && Array.isArray(state.payload.penalties) && state.payload.penalties.length > 0)) {
+                                        google.script.run.withSuccessHandler(function (cfg) {
+                                            applyBwConfigSnapshot(cfg, false);
+                                        }).bw_getConfig();
+                                    }
+                                } else {
+                                    if (self.onStateChange) self.onStateChange(state);
+                                    if (state.timestamp > self.lastTimestamp) {
+                                        self.lastTimestamp = state.timestamp;
+                                        self.handleMessage(state);
+                                    }
                                 }
                             } else {
                                 initialLoaded = true;
