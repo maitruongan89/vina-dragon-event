@@ -5,7 +5,7 @@ const STATE_FILE = '/tmp/vina_dragon_state_v2.json';
 
 const DEFAULT_BW_PENALTIES = [
   '💪 Nắm tai nhún nhảy 5 cái',
-  '🎤 Hát 1 bài hát',
+  '💃 Vũ điệu lái xe',
   '🍺 Uống 1 ly bia'
 ];
 
