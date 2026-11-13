@@ -16,7 +16,7 @@
 
   var DEFAULT_PENALTIES = [
     '💪 Nắm tai nhún nhảy 5 cái',
-    '🎤 Hát 1 bài hát',
+    '💃 Vũ điệu lái xe',
     '🍺 Uống 1 ly bia'
   ];
 
@@ -27,9 +27,6 @@
       var low = s.toLowerCase();
       if (low.indexOf('hít đất 10 cái') > -1 || low.indexOf('thụt dầu 10 cái') > -1) {
         return '💪 Nắm tai nhún nhảy 5 cái';
-      }
-      if (low.indexOf('vũ điệu lái xe') > -1) {
-        return '🎤 Hát 1 bài hát';
       }
       return s;
     }).filter(Boolean);
@@ -44,6 +41,8 @@
       lixiUsed: 0,
       penalties: DEFAULT_PENALTIES.slice(),
       penaltiesCustom: false,
+      penaltiesUpdatedAt: 0,
+      penaltiesCfgId: '',
       updatedAt: 0
     },
     tables: {
@@ -53,9 +52,11 @@
   };
 
   // Khôi phục cấu hình (nhưng KHÔNG tự chạy lại hành động quay/dừng nhạc cũ từ phiên trước)
+  var hasSavedLocalStore = false;
   try {
     var saved = localStorage.getItem('VD_VERCEL_STORE_V3');
     if (saved) {
+      hasSavedLocalStore = true;
       var parsed = JSON.parse(saved);
       if (parsed && typeof parsed === 'object') {
         if (parsed.systemState) {
@@ -69,6 +70,34 @@
         if (parsed.bwConfig) memoryStore.bwConfig = Object.assign(memoryStore.bwConfig, parsed.bwConfig);
         if (parsed.tables) memoryStore.tables = Object.assign(memoryStore.tables, parsed.tables);
       }
+    }
+  } catch (e) {}
+
+  // Nâng cấp mặc định cũ ('🎤 Hát 1 bài hát' -> '💃 Vũ điệu lái xe') đúng 1 lần trên trình duyệt cũ, không ghi đè chỉnh sửa sau này của Admin
+  var BW_DEFAULT_MIGRATION_VER = 'v_drive_2';
+  try {
+    if (localStorage.getItem('VD_BW_DEF_V') !== BW_DEFAULT_MIGRATION_VER) {
+      var upgradeOldDefaultPenalty = function (p) {
+        var s = String(p || '').trim();
+        var low = s.toLowerCase();
+        if (low === '🎤 hát 1 bài hát' || low === 'hát 1 bài hát') return '💃 Vũ điệu lái xe';
+        return s;
+      };
+      if (Array.isArray(memoryStore.bwConfig.penalties)) {
+        memoryStore.bwConfig.penalties = memoryStore.bwConfig.penalties.map(upgradeOldDefaultPenalty);
+      }
+      if (memoryStore.systemState && memoryStore.systemState.payload && Array.isArray(memoryStore.systemState.payload.penalties)) {
+        memoryStore.systemState.payload.penalties = memoryStore.systemState.payload.penalties.map(upgradeOldDefaultPenalty);
+      }
+      var rawBwPen = localStorage.getItem('VD_BW_PENALTIES');
+      if (rawBwPen) {
+        var parsedBwPen = JSON.parse(rawBwPen);
+        if (Array.isArray(parsedBwPen) && parsedBwPen.length > 0) {
+          localStorage.setItem('VD_BW_PENALTIES', JSON.stringify(parsedBwPen.map(upgradeOldDefaultPenalty)));
+        }
+      }
+      localStorage.setItem('VD_BW_DEF_V', BW_DEFAULT_MIGRATION_VER);
+      if (hasSavedLocalStore) localStorage.setItem('VD_VERCEL_STORE_V3', JSON.stringify(memoryStore));
     }
   } catch (e) {}
 
@@ -123,22 +152,54 @@
     }
   });
 
+  function emitBwConfigUpdated() {
+    try {
+      window.dispatchEvent(new CustomEvent('vd-bw-config-updated', { detail: formatBwConfig(memoryStore.bwConfig) }));
+    } catch (e) {}
+  }
+
   function applyIncomingSync(incoming, isHistorical) {
     if (!incoming || typeof incoming !== 'object') return;
     var changed = false;
+    var cfgChanged = false;
 
     if (incoming.bwConfig) {
-      var incCfgId = incoming.bwConfig.cfgId || '';
-      var incCfgTs = incoming.bwConfig.updatedAt || 0;
+      var incCfg = incoming.bwConfig;
+      var incCfgId = incCfg.cfgId || '';
+      var incCfgTs = incCfg.updatedAt || 0;
       var curCfgTs = memoryStore.bwConfig.updatedAt || 0;
-      var isNewCfgPacket = !isHistorical && incCfgId && !seenCfgIds[incCfgId] && incoming.bwConfig.senderId !== TAB_SENDER_ID;
+      var isNewCfgPacket = !isHistorical && incCfgId && !seenCfgIds[incCfgId] && incCfg.senderId !== TAB_SENDER_ID;
       if (incCfgId) seenCfgIds[incCfgId] = true;
 
-      if (isNewCfgPacket || incCfgTs > curCfgTs || (incCfgTs === curCfgTs && !memoryStore.bwConfig.penaltiesCustom && incoming.bwConfig.penaltiesCustom)) {
-        var nextCfg = Object.assign({}, memoryStore.bwConfig, incoming.bwConfig);
-        nextCfg.updatedAt = Math.max(Date.now(), curCfgTs + 1, incCfgTs);
+      var incPenTs = incCfg.penaltiesUpdatedAt || (incCfg.penaltiesCustom ? incCfgTs : 0);
+      var curPenTs = memoryStore.bwConfig.penaltiesUpdatedAt || (memoryStore.bwConfig.penaltiesCustom ? curCfgTs : 0);
+      var incPenId = incCfg.penaltiesCfgId || '';
+      var isNewPenPacket = !isHistorical && incPenId && incPenId !== (memoryStore.bwConfig.penaltiesCfgId || '') && incCfg.senderId !== TAB_SENDER_ID;
+      var penaltiesChanged = false;
+      var nextPenalties = memoryStore.bwConfig.penalties;
+      var nextPenCustom = memoryStore.bwConfig.penaltiesCustom;
+      var nextPenTs = memoryStore.bwConfig.penaltiesUpdatedAt || 0;
+      var nextPenId = memoryStore.bwConfig.penaltiesCfgId || '';
+
+      if (Array.isArray(incCfg.penalties) && incCfg.penalties.length > 0 &&
+          (isNewPenPacket || incPenTs > curPenTs || (!memoryStore.bwConfig.penaltiesCustom && incCfg.penaltiesCustom))) {
+        nextPenalties = incCfg.penalties.slice();
+        nextPenCustom = !!incCfg.penaltiesCustom;
+        nextPenTs = Math.max(curPenTs, incPenTs);
+        if (incPenId) nextPenId = incPenId;
+        penaltiesChanged = true;
+      }
+
+      if (isNewCfgPacket || incCfgTs > curCfgTs || penaltiesChanged || (incCfgTs === curCfgTs && !memoryStore.bwConfig.penaltiesCustom && incCfg.penaltiesCustom)) {
+        var nextCfg = Object.assign({}, memoryStore.bwConfig, incCfg);
+        nextCfg.penalties = nextPenalties;
+        nextCfg.penaltiesCustom = nextPenCustom;
+        nextCfg.penaltiesUpdatedAt = nextPenTs;
+        nextCfg.penaltiesCfgId = nextPenId;
+        nextCfg.updatedAt = Math.max(curCfgTs, incCfgTs);
         memoryStore.bwConfig = nextCfg;
         changed = true;
+        cfgChanged = true;
       }
     }
 
@@ -161,7 +222,10 @@
       } else {
         // Bỏ qua nếu chính tab hiện tại vừa phát đi hoặc msgId này đã xử lý từ kênh khác
         if (s.senderId === TAB_SENDER_ID || seenMsgIds[msgId]) {
-          if (changed) persistLocal();
+          if (changed) {
+            persistLocal();
+            if (cfgChanged) emitBwConfigUpdated();
+          }
           return;
         }
         seenMsgIds[msgId] = true;
@@ -185,6 +249,7 @@
 
     if (changed) {
       persistLocal();
+      if (cfgChanged) emitBwConfigUpdated();
     }
   }
 
@@ -855,10 +920,14 @@
         if (payload && Array.isArray(payload.penalties) && payload.penalties.length > 0) {
           var cleaned = payload.penalties.map(function (p) { return String(p || '').trim(); }).filter(Boolean);
           if (cleaned.length > 0) {
+            var penTs = Math.max(Date.now(), (memoryStore.bwConfig.penaltiesUpdatedAt || 0) + 1);
+            var penId = createMsgId();
             memoryStore.bwConfig.penalties = cleaned;
             memoryStore.bwConfig.penaltiesCustom = true;
-            memoryStore.bwConfig.updatedAt = nextConfigTimestamp();
-            memoryStore.bwConfig.cfgId = createMsgId();
+            memoryStore.bwConfig.penaltiesUpdatedAt = penTs;
+            memoryStore.bwConfig.penaltiesCfgId = penId;
+            memoryStore.bwConfig.updatedAt = Math.max(nextConfigTimestamp(), penTs);
+            memoryStore.bwConfig.cfgId = penId;
             memoryStore.bwConfig.senderId = TAB_SENDER_ID;
           }
         }
@@ -876,12 +945,26 @@
         if (Array.isArray(args[0])) {
           var cl = args[0].map(function (p) { return String(p || '').trim(); }).filter(Boolean);
           if (cl.length > 0) {
-            memoryStore.bwConfig.penalties = cl;
-            memoryStore.bwConfig.penaltiesCustom = true;
-            memoryStore.bwConfig.updatedAt = nextConfigTimestamp();
-            memoryStore.bwConfig.cfgId = createMsgId();
-            memoryStore.bwConfig.senderId = TAB_SENDER_ID;
-            broadcastSyncPacket();
+            var alreadySyncedRecently =
+              memoryStore.bwConfig.penaltiesCustom &&
+              memoryStore.bwConfig.senderId === TAB_SENDER_ID &&
+              JSON.stringify(memoryStore.bwConfig.penalties) === JSON.stringify(cl) &&
+              (Date.now() - (memoryStore.bwConfig.penaltiesUpdatedAt || 0)) < 2000;
+            if (!alreadySyncedRecently) {
+              var penTs2 = Math.max(Date.now(), (memoryStore.bwConfig.penaltiesUpdatedAt || 0) + 1);
+              var penId2 = createMsgId();
+              memoryStore.bwConfig.penalties = cl;
+              memoryStore.bwConfig.penaltiesCustom = true;
+              memoryStore.bwConfig.penaltiesUpdatedAt = penTs2;
+              memoryStore.bwConfig.penaltiesCfgId = penId2;
+              memoryStore.bwConfig.updatedAt = Math.max(nextConfigTimestamp(), penTs2);
+              memoryStore.bwConfig.cfgId = penId2;
+              memoryStore.bwConfig.senderId = TAB_SENDER_ID;
+              broadcastSyncPacket();
+            } else {
+              persistLocal();
+            }
+            emitBwConfigUpdated();
           }
         }
         doneCb(null, formatBwConfig(memoryStore.bwConfig));
