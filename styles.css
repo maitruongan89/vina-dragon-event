@@ -1,4 +1,5 @@
-/* Import High-Compatibility Fonts */
+
+  /* Import High-Compatibility Fonts */
   @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@800;900&family=Great+Vibes&family=Inter:ital,wght@0,400;0,500;0,700;1,400&family=Playfair+Display:ital@1&display=swap');
 
   :root {
@@ -1027,120 +1028,133 @@
 
   @media (max-width: 768px) {
     #section-waiting {
-      top: 10%;
+      top: 12%;
       padding: 0 14px;
     }
 
     .top-logo {
-      width: 95px;
+      width: 90px;
       margin-top: 0;
       margin-bottom: 1rem;
     }
 
     .display-title {
-      white-space: normal;
-      font-size: clamp(1.15rem, 4.8vw, 1.65rem);
-      line-height: 1.35;
-      max-width: 94vw;
+      white-space: normal !important;
+      font-size: clamp(1.1rem, 4.6vw, 1.55rem) !important;
+      line-height: 1.35 !important;
+      max-width: 92vw !important;
     }
 
     .shimmer-text {
-      font-size: clamp(1.2rem, 4.8vw, 2rem);
-      line-height: 1.35;
+      font-size: clamp(1.15rem, 4.5vw, 1.75rem) !important;
+      line-height: 1.35 !important;
       padding: 0 8px;
     }
 
     .location-date {
-      font-size: 0.9rem;
-      margin-top: 0.6rem;
+      font-size: 0.9rem !important;
+      margin-top: 0.6rem !important;
+    }
+
+    #stage-container,
+    #section-bonus-wheel {
+      height: 100vh !important;
+      height: 100dvh !important;
     }
 
     #section-bonus-wheel {
-      justify-content: flex-start;
-      padding-top: 5vh;
+      justify-content: center !important;
+      padding: 0 10px 25px 10px !important;
     }
 
     .bw-title-container {
-      margin-top: 0;
-      margin-bottom: 16px;
-      padding: 0 8px;
+      margin-top: 0 !important;
+      margin-bottom: 14px !important;
+      padding: 0 4px !important;
     }
 
     .bw-arched-svg {
-      width: 96vw;
-      max-height: 85px;
+      width: 96vw !important;
+      height: auto !important;
+      max-height: 72px !important;
+    }
+
+    .bw-arched-text {
+      font-size: 74px !important;
+      letter-spacing: 2px !important;
     }
 
     .bw-subtitle {
-      font-size: clamp(1.3rem, 5.2vw, 1.85rem) !important;
-      margin-top: -10px;
+      font-size: clamp(1.05rem, 4.2vw, 1.35rem) !important;
+      margin-top: 0px !important;
+      padding: 0 !important;
     }
 
     .bonus-wheel-wrapper,
     .wheel-wrapper {
-      width: min(76vw, 44vh);
-      height: min(76vw, 44vh);
-      margin: 8px auto 0 auto;
+      width: min(72vw, 42vh, 300px) !important;
+      height: min(72vw, 42vh, 300px) !important;
+      margin: 6px auto 82px auto !important;
     }
 
     #bonus-wheel-canvas,
     #lucky-wheel-canvas {
-      border-width: 7px;
+      border-width: 6px !important;
     }
 
     .wheel-pointer {
-      top: -14px;
-      width: 32px;
-      height: 32px;
+      top: -13px !important;
+      width: 28px !important;
+      height: 28px !important;
     }
 
-    /* Đặt 2 bàn tay gọn ở 2 góc dưới vòng quay để không tràn màn hình điện thoại */
-    .bw-side-hand {
-      top: 92%;
-      width: 96px;
-      height: 96px;
+    /* Đặt 2 bàn tay cân đối phía dưới 2 bên vòng quay, không dùng !important ở top/left/right để giữ hiệu ứng bay lên đỉnh */
+    #section-bonus-wheel .bw-side-hand {
+      top: calc(100% + 44px);
+      width: 82px !important;
+      height: 82px !important;
     }
 
-    .bw-hand-left {
-      left: -14px;
+    #section-bonus-wheel .bw-hand-left {
+      left: 8%;
     }
 
-    .bw-hand-right {
-      right: -14px;
+    #section-bonus-wheel .bw-hand-right {
+      right: 8%;
     }
 
     .hand-icon-side {
-      width: 86px;
-      height: 86px;
+      width: 74px !important;
+      height: 74px !important;
     }
 
     .hand-ripple {
-      width: 54px;
-      height: 54px;
+      width: 48px !important;
+      height: 48px !important;
     }
 
     @keyframes moveLeftHandToTop {
       0% {
-        left: -14px;
-        top: 92%;
+        left: 8%;
+        top: calc(100% + 44px);
         transform: translateY(-50%) scale(1) rotate(0deg);
         opacity: 1;
       }
       55% {
-        left: -10px;
-        top: 25%;
+        left: -6%;
+        top: 40%;
         transform: translateY(-50%) scale(1.05) rotate(20deg);
         opacity: 1;
       }
       90% {
         left: 28%;
-        top: 4%;
+        top: 2%;
         transform: translateY(-50%) scale(0.95) rotate(32deg);
         opacity: 1;
       }
       100% {
         left: 34%;
-        top: 4%;
+        top: 2%;
         transform: translateY(-50%) scale(0.6) rotate(35deg);
         opacity: 0;
       }
@@ -1148,77 +1162,167 @@
 
     @keyframes moveRightHandToTop {
       0% {
-        right: -14px;
-        top: 92%;
+        right: 8%;
+        top: calc(100% + 44px);
         transform: translateY(-50%) scale(1) rotate(0deg);
         opacity: 1;
       }
       55% {
-        right: -10px;
-        top: 25%;
+        right: -6%;
+        top: 40%;
         transform: translateY(-50%) scale(1.05) rotate(-20deg);
         opacity: 1;
       }
       90% {
         right: 28%;
-        top: 4%;
+        top: 2%;
         transform: translateY(-50%) scale(0.95) rotate(-32deg);
         opacity: 1;
       }
       100% {
         right: 34%;
-        top: 4%;
+        top: 2%;
         transform: translateY(-50%) scale(0.6) rotate(-35deg);
         opacity: 0;
       }
     }
 
     .bw-clasped-container {
-      width: 140px;
-      height: 110px;
-      top: 12px;
+      width: 120px !important;
+      height: 95px !important;
+      top: 8px !important;
     }
 
     .hand-icon-clasped {
-      width: 120px;
+      width: 105px !important;
     }
 
     .clasped-glow-burst {
-      width: 130px;
-      height: 130px;
+      width: 115px !important;
+      height: 115px !important;
     }
 
     .bw-result-banner {
-      width: 90vw;
-      max-width: 360px;
-      padding: 1rem 1.2rem;
-      font-size: clamp(1.15rem, 4.8vw, 1.65rem);
-      border-radius: 18px;
-      text-align: center;
-      line-height: 1.35;
+      width: 88vw !important;
+      max-width: 340px !important;
+      padding: 0.9rem 1rem !important;
+      font-size: clamp(1.1rem, 4.5vw, 1.5rem) !important;
+      border-radius: 16px !important;
+      text-align: center !important;
+      line-height: 1.35 !important;
     }
 
     #ld-prize-tier {
-      font-size: clamp(1.8rem, 7vw, 2.6rem) !important;
+      font-size: clamp(1.6rem, 6.5vw, 2.3rem) !important;
     }
 
     #ld-prize-name {
-      font-size: clamp(1rem, 4vw, 1.35rem) !important;
-      padding: 6px 18px !important;
-      margin-bottom: 1rem !important;
+      font-size: clamp(0.95rem, 3.8vw, 1.25rem) !important;
+      padding: 6px 16px !important;
+      margin-bottom: 0.8rem !important;
     }
 
     .winner-banner {
-      min-width: 0;
-      width: 90vw;
-      padding: 1.1rem 1.2rem;
+      min-width: 0 !important;
+      width: 88vw !important;
+      padding: 1rem !important;
     }
 
     #winner-main-text {
-      font-size: clamp(1.4rem, 5.5vw, 2rem) !important;
+      font-size: clamp(1.3rem, 5vw, 1.85rem) !important;
     }
 
     #winner-sub-text {
-      font-size: clamp(0.95rem, 3.8vw, 1.2rem) !important;
+      font-size: clamp(0.9rem, 3.6vw, 1.15rem) !important;
+    }
+  }
+
+  /* Chế độ xoay ngang điện thoại (Landscape Mobile) */
+  @media (max-height: 550px) and (orientation: landscape) {
+    #stage-container,
+    #section-bonus-wheel {
+      height: 100vh !important;
+      height: 100dvh !important;
+    }
+
+    #section-bonus-wheel {
+      justify-content: center !important;
+      padding: 4px 10px 18px 10px !important;
+    }
+
+    .bw-title-container {
+      margin-top: 0 !important;
+      margin-bottom: 6px !important;
+    }
+
+    .bw-arched-svg {
+      width: min(72vw, 480px) !important;
+      max-height: 44px !important;
+    }
+
+    .bw-arched-text {
+      font-size: 68px !important;
+    }
+
+    .bw-subtitle {
+      font-size: clamp(0.95rem, 3.5vh, 1.25rem) !important;
+      margin-top: -6px !important;
+    }
+
+    .bonus-wheel-wrapper,
+    .wheel-wrapper {
+      width: min(52vh, 220px) !important;
+      height: min(52vh, 220px) !important;
+      margin: 2px auto !important;
+    }
+
+    #bonus-wheel-canvas,
+    #lucky-wheel-canvas {
+      border-width: 5px !important;
+    }
+
+    .wheel-pointer {
+      top: -11px !important;
+      width: 24px !important;
+      height: 24px !important;
+    }
+
+    #section-bonus-wheel .bw-side-hand {
+      top: 52%;
+      width: 86px !important;
+      height: 86px !important;
+    }
+
+    #section-bonus-wheel .bw-hand-left {
+      left: -105px;
+    }
+
+    #section-bonus-wheel .bw-hand-right {
+      right: -105px;
+    }
+
+    .hand-icon-side {
+      width: 78px !important;
+      height: 78px !important;
+    }
+
+    .hand-ripple {
+      width: 48px !important;
+      height: 48px !important;
+    }
+
+    .bw-clasped-container {
+      width: 105px !important;
+      height: 85px !important;
+      top: 6px !important;
+    }
+
+    .hand-icon-clasped {
+      width: 90px !important;
+    }
+
+    .clasped-glow-burst {
+      width: 100px !important;
+      height: 100px !important;
     }
   }

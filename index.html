@@ -5,9 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <base target="_top">
-    <title>VINA DRAGON - Main Display</title>
-    <script>if (location.search.indexOf("page=admin") > -1 || location.search.indexOf("view=admin") > -1) { location.replace("/admin"); }</script>
-    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/styles.css?v=6">
     <style>
         #sync-indicator {
             position: fixed;
@@ -75,6 +73,119 @@
                     0 0 20px rgba(255, 140, 0, 0.35),
                     0 1px 2px rgba(0, 0, 0, 0.9);
             }
+        }
+
+        @media (max-width: 768px) {
+            #stage-container, #section-bonus-wheel {
+                height: 100vh !important;
+                height: 100dvh !important;
+            }
+            #section-bonus-wheel {
+                justify-content: center !important;
+                padding: 0 10px 25px 10px !important;
+            }
+            .bw-title-container {
+                margin-top: 0 !important;
+                margin-bottom: 14px !important;
+                padding: 0 4px !important;
+            }
+            .bw-arched-svg {
+                width: 96vw !important;
+                height: auto !important;
+                max-height: 72px !important;
+            }
+            .bw-arched-text {
+                font-size: 74px !important;
+                letter-spacing: 2px !important;
+            }
+            .bw-subtitle {
+                font-size: clamp(1.05rem, 4.2vw, 1.35rem) !important;
+                margin-top: 0px !important;
+                padding: 0 !important;
+            }
+            .bonus-wheel-wrapper, .wheel-wrapper {
+                width: min(72vw, 42vh, 300px) !important;
+                height: min(72vw, 42vh, 300px) !important;
+                margin: 6px auto 82px auto !important;
+            }
+            #bonus-wheel-canvas, #lucky-wheel-canvas {
+                border-width: 6px !important;
+            }
+            .wheel-pointer {
+                top: -13px !important;
+                width: 28px !important;
+                height: 28px !important;
+            }
+            #section-bonus-wheel .bw-side-hand {
+                top: calc(100% + 44px);
+                width: 82px !important;
+                height: 82px !important;
+            }
+            #section-bonus-wheel .bw-hand-left { left: 8%; }
+            #section-bonus-wheel .bw-hand-right { right: 8%; }
+            .hand-icon-side {
+                width: 74px !important;
+                height: 74px !important;
+            }
+            .hand-ripple {
+                width: 48px !important;
+                height: 48px !important;
+            }
+            .bw-clasped-container {
+                width: 120px !important;
+                height: 95px !important;
+                top: 8px !important;
+            }
+            .hand-icon-clasped { width: 105px !important; }
+            .clasped-glow-burst { width: 115px !important; height: 115px !important; }
+            .bw-result-banner {
+                width: 88vw !important;
+                max-width: 340px !important;
+                padding: 0.9rem 1rem !important;
+                font-size: clamp(1.1rem, 4.5vw, 1.5rem) !important;
+                border-radius: 16px !important;
+                text-align: center !important;
+            }
+        }
+
+        @media (max-height: 550px) and (orientation: landscape) {
+            #stage-container, #section-bonus-wheel {
+                height: 100vh !important;
+                height: 100dvh !important;
+            }
+            #section-bonus-wheel {
+                justify-content: center !important;
+                padding: 4px 10px 18px 10px !important;
+            }
+            .bw-title-container {
+                margin-top: 0 !important;
+                margin-bottom: 6px !important;
+            }
+            .bw-arched-svg {
+                width: min(72vw, 480px) !important;
+                max-height: 44px !important;
+            }
+            .bw-arched-text { font-size: 68px !important; }
+            .bw-subtitle {
+                font-size: clamp(0.95rem, 3.5vh, 1.25rem) !important;
+                margin-top: -6px !important;
+            }
+            .bonus-wheel-wrapper, .wheel-wrapper {
+                width: min(52vh, 220px) !important;
+                height: min(52vh, 220px) !important;
+                margin: 2px auto !important;
+            }
+            #bonus-wheel-canvas, #lucky-wheel-canvas { border-width: 5px !important; }
+            .wheel-pointer { top: -11px !important; width: 24px !important; height: 24px !important; }
+            #section-bonus-wheel .bw-side-hand {
+                top: 52%;
+                width: 86px !important;
+                height: 86px !important;
+            }
+            #section-bonus-wheel .bw-hand-left { left: -105px; }
+            #section-bonus-wheel .bw-hand-right { right: -105px; }
+            .hand-icon-side { width: 78px !important; height: 78px !important; }
+            .hand-ripple { width: 48px !important; height: 48px !important; }
         }
     </style>
 </head>
@@ -266,8 +377,8 @@
         </div>
     </div>
 
-    <script src="/gas-shim.js"></script>
-    <script src="/core.js"></script>
+    <script src="/gas-shim.js?v=6"></script>
+    <script src="/core.js?v=6"></script>
 
     <script>
         // Global Error Boundary

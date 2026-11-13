@@ -1,4 +1,5 @@
-/**
+
+    /**
      * VINA DRAGON - ROBUST JAVASCRIPT CORE
      * Standard prototype-based functions for maximum compatibility.
      */
@@ -157,10 +158,6 @@
 
     LuckyWheel.prototype.setParticipants = function (list) {
         this.participants = list || [];
-        // If too many, adjust font size
-        this.fontSize = 42;
-        if (this.participants.length > 20) this.fontSize = 32;
-        if (this.participants.length > 40) this.fontSize = 22;
 
         // If too few, mock some for visuals to keep it "full"
         // But keep it consistent
@@ -170,6 +167,12 @@
                 this.participants = this.participants.concat(original);
             }
         }
+
+        // Adjust base font size after final slice count is known
+        this.fontSize = 38;
+        if (this.participants.length > 20) this.fontSize = 32;
+        if (this.participants.length > 40) this.fontSize = 22;
+
         this.draw();
     };
 
@@ -212,13 +215,19 @@
             var brightness = (r * 299 + g * 587 + b * 114) / 1000;
             ctx.fillStyle = (brightness < 128) ? "#fff" : "#000";
 
-            ctx.font = "bold " + this.fontSize + "px 'Be Vietnam Pro', Arial";
             var label = String(participants[i].Name || participants[i].Code || participants[i]);
+            var fSize = this.fontSize;
+            var maxTextWidth = radius - 145; // Keep clear of center hub (70px) and outer rim
+            ctx.font = "bold " + fSize + "px 'Be Vietnam Pro', Arial";
+            while (fSize > 20 && ctx.measureText(label).width > maxTextWidth) {
+                fSize -= 2;
+                ctx.font = "bold " + fSize + "px 'Be Vietnam Pro', Arial";
+            }
 
             ctx.shadowBlur = 4;
             ctx.shadowColor = "rgba(0,0,0,0.5)";
 
-            ctx.fillText(label, radius - 40, this.fontSize / 3);
+            ctx.fillText(label, radius - 34, fSize / 3, maxTextWidth);
             ctx.restore();
         }
 
