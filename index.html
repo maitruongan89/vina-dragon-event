@@ -708,10 +708,24 @@
             var bonusWheel = new window.LuckyWheel('bonus-wheel-canvas');
             var bwAnimating = false;
             var defaultPenalties = [
-                "💪 Hít đất 10 cái",
+                "💪 Nắm tai nhún nhảy 5 cái",
                 "🎤 Hát 1 bài hát",
                 "🍺 Uống 1 ly bia"
             ];
+            function normalizePenaltiesList(list) {
+                if (!Array.isArray(list) || list.length === 0) return defaultPenalties.slice();
+                return list.map(function (p) {
+                    var s = String(p || '').trim();
+                    var low = s.toLowerCase();
+                    if (low.indexOf('hít đất 10 cái') > -1 || low.indexOf('thụt dầu 10 cái') > -1) {
+                        return "💪 Nắm tai nhún nhảy 5 cái";
+                    }
+                    if (low.indexOf('vũ điệu lái xe') > -1) {
+                        return "🎤 Hát 1 bài hát";
+                    }
+                    return s;
+                }).filter(Boolean);
+            }
             var currentPenalties = defaultPenalties.slice();
 
             try {
@@ -719,7 +733,8 @@
                 if (savedLocalPen) {
                     var parsedLocalPen = JSON.parse(savedLocalPen);
                     if (Array.isArray(parsedLocalPen) && parsedLocalPen.length > 0) {
-                        currentPenalties = parsedLocalPen;
+                        currentPenalties = normalizePenaltiesList(parsedLocalPen);
+                        localStorage.setItem('VD_BW_PENALTIES', JSON.stringify(currentPenalties));
                     }
                 }
             } catch (e) {}
@@ -760,7 +775,7 @@
 
             function applyPenaltiesIfChanged(newPenalties, forceRedraw) {
                 if (!Array.isArray(newPenalties) || newPenalties.length === 0) return;
-                var cleaned = newPenalties.map(function (p) { return String(p || '').trim(); }).filter(Boolean);
+                var cleaned = normalizePenaltiesList(newPenalties);
                 if (cleaned.length === 0) return;
                 var json = JSON.stringify(cleaned);
                 if (forceRedraw || json !== lastAppliedPenaltiesJson || !bonusWheel.participants || bonusWheel.participants.length === 0) {

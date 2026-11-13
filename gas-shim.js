@@ -13,10 +13,25 @@
   var CLOUD_URL = 'https://ntfy.sh/' + CLOUD_TOPIC;
 
   var DEFAULT_PENALTIES = [
-    '💪 Hít đất 10 cái',
+    '💪 Nắm tai nhún nhảy 5 cái',
     '🎤 Hát 1 bài hát',
     '🍺 Uống 1 ly bia'
   ];
+
+  function normalizePenalties(list) {
+    if (!Array.isArray(list) || list.length === 0) return DEFAULT_PENALTIES.slice();
+    return list.map(function (p) {
+      var s = String(p || '').trim();
+      var low = s.toLowerCase();
+      if (low.indexOf('hít đất 10 cái') > -1 || low.indexOf('thụt dầu 10 cái') > -1) {
+        return '💪 Nắm tai nhún nhảy 5 cái';
+      }
+      if (low.indexOf('vũ điệu lái xe') > -1) {
+        return '🎤 Hát 1 bài hát';
+      }
+      return s;
+    }).filter(Boolean);
+  }
 
   var memoryStore = {
     systemState: null,
@@ -59,9 +74,7 @@
     var giftUsed = cfg.giftUsed !== undefined ? parseInt(cfg.giftUsed) : 0;
     var lixiTotal = cfg.lixiTotal !== undefined ? parseInt(cfg.lixiTotal) : 10;
     var lixiUsed = cfg.lixiUsed !== undefined ? parseInt(cfg.lixiUsed) : 0;
-    var penalties = (Array.isArray(cfg.penalties) && cfg.penalties.length > 0)
-      ? cfg.penalties
-      : DEFAULT_PENALTIES.slice();
+    var penalties = normalizePenalties(cfg.penalties);
 
     return {
       giftTotal: giftTotal,
