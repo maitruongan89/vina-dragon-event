@@ -3,6 +3,7 @@
   "cleanUrls": true,
   "rewrites": [
     { "source": "/admin", "destination": "/admin.html" },
+    { "source": "/page", "destination": "/admin.html" },
     { "source": "/api/rpc", "destination": "/api/rpc.js" }
   ],
   "headers": [
