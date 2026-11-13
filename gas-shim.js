@@ -204,12 +204,243 @@
   }
 
   var rateLimitedUntil = 0;
+  var ntfyBlockedUntil = 0;
+  var ntfyFailCount = 0;
+  var apiSyncEnabled = true;
 
-  // Đẩy trạng thái lên BroadcastChannel + LocalStorage + Cloud Realtime (ntfy.sh)
+  var MQTT_BROKERS = [
+    'wss://broker.emqx.io:8084/mqtt',
+    'wss://test.mosquitto.org:8081/',
+    'wss://broker.hivemq.com:8884/mqtt'
+  ];
+  var MQTT_BASE_TOPIC = 'vina_dragon/asean_2026_v3/' + CLOUD_TOPIC;
+  var MQTT_CMD_TOPIC = MQTT_BASE_TOPIC + '/cmd';
+  var MQTT_CFG_TOPIC = MQTT_BASE_TOPIC + '/cfg';
+
+  function strToUtf8Bytes(str) {
+    if (typeof TextEncoder !== 'undefined') return new TextEncoder().encode(str);
+    var utf8 = unescape(encodeURIComponent(str));
+    var arr = new Uint8Array(utf8.length);
+    for (var i = 0; i < utf8.length; i++) arr[i] = utf8.charCodeAt(i);
+    return arr;
+  }
+
+  function utf8BytesToStr(bytes) {
+    if (typeof TextDecoder !== 'undefined') return new TextDecoder('utf-8').decode(bytes);
+    var bin = '';
+    for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return decodeURIComponent(escape(bin));
+  }
+
+  function encodeVarLen(len) {
+    var out = [];
+    do {
+      var d = len % 128;
+      len = Math.floor(len / 128);
+      if (len > 0) d = d | 0x80;
+      out.push(d);
+    } while (len > 0);
+    return out;
+  }
+
+  function concatBytes(parts) {
+    var total = 0;
+    for (var i = 0; i < parts.length; i++) total += parts[i].length;
+    var out = new Uint8Array(total);
+    var pos = 0;
+    for (var j = 0; j < parts.length; j++) {
+      out.set(parts[j], pos);
+      pos += parts[j].length;
+    }
+    return out;
+  }
+
+  function mqttConnectPacket(clientId) {
+    var cidBytes = strToUtf8Bytes(clientId);
+    var vh = new Uint8Array([0x00, 0x04, 0x4D, 0x51, 0x54, 0x54, 0x04, 0x02, 0x00, 0x2D]);
+    var cidLen = new Uint8Array([(cidBytes.length >> 8) & 0xFF, cidBytes.length & 0xFF]);
+    var rem = encodeVarLen(vh.length + cidLen.length + cidBytes.length);
+    return concatBytes([new Uint8Array([0x10].concat(rem)), vh, cidLen, cidBytes]);
+  }
+
+  function mqttSubscribePacket(pktId, topics) {
+    var vh = new Uint8Array([(pktId >> 8) & 0xFF, pktId & 0xFF]);
+    var parts = [vh];
+    var remLen = 2;
+    for (var i = 0; i < topics.length; i++) {
+      var tb = strToUtf8Bytes(topics[i]);
+      parts.push(new Uint8Array([(tb.length >> 8) & 0xFF, tb.length & 0xFF]));
+      parts.push(tb);
+      parts.push(new Uint8Array([0x00]));
+      remLen += 2 + tb.length + 1;
+    }
+    var hdr = new Uint8Array([0x82].concat(encodeVarLen(remLen)));
+    return concatBytes([hdr].concat(parts));
+  }
+
+  function mqttPublishPacket(topic, msgStr, retain) {
+    var tb = strToUtf8Bytes(topic);
+    var pb = strToUtf8Bytes(msgStr);
+    var remLen = 2 + tb.length + pb.length;
+    var hdrByte = retain ? 0x31 : 0x30;
+    var hdr = new Uint8Array([hdrByte].concat(encodeVarLen(remLen)));
+    var tLen = new Uint8Array([(tb.length >> 8) & 0xFF, tb.length & 0xFF]);
+    return concatBytes([hdr, tLen, tb, pb]);
+  }
+
+  var mqttWs = null;
+  var mqttConnected = false;
+  var mqttBrokerIdx = 0;
+  var mqttPingTimer = null;
+  var mqttOpenTimer = null;
+  var mqttRetryTimer = null;
+  var mqttPktSeq = 1;
+
+  function isMqttConnected() {
+    return !!(mqttConnected && mqttWs && mqttWs.readyState === 1);
+  }
+
+  function publishMqttPacket(topic, msgStr, retain) {
+    if (!isMqttConnected()) return false;
+    try {
+      mqttWs.send(mqttPublishPacket(topic, msgStr, !!retain));
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function closeMqtt() {
+    mqttConnected = false;
+    if (mqttOpenTimer) { clearTimeout(mqttOpenTimer); mqttOpenTimer = null; }
+    if (mqttPingTimer) { clearInterval(mqttPingTimer); mqttPingTimer = null; }
+    if (mqttWs) {
+      try { mqttWs.onopen = mqttWs.onmessage = mqttWs.onerror = mqttWs.onclose = null; mqttWs.close(); } catch (e) {}
+      mqttWs = null;
+    }
+  }
+
+  function scheduleMqttReconnect(delayMs) {
+    if (mqttRetryTimer) return;
+    mqttRetryTimer = setTimeout(function () {
+      mqttRetryTimer = null;
+      connectMqtt();
+    }, delayMs || 4000);
+  }
+
+  function handleMqttBinary(buf) {
+    var offset = 0;
+    while (offset + 2 <= buf.length) {
+      var hdr = buf[offset++];
+      var pktType = hdr >> 4;
+      var qos = (hdr >> 1) & 0x03;
+      var mult = 1;
+      var remLen = 0;
+      var encoded = 0;
+      do {
+        if (offset >= buf.length) return;
+        encoded = buf[offset++];
+        remLen += (encoded & 127) * mult;
+        mult *= 128;
+      } while ((encoded & 128) !== 0);
+      var pktEnd = offset + remLen;
+      if (pktEnd > buf.length) return;
+
+      if (pktType === 2) {
+        // CONNACK
+        if (remLen >= 2 && buf[offset + 1] === 0) {
+          mqttConnected = true;
+          syncStatus.mqtt = MQTT_BROKERS[mqttBrokerIdx];
+          if (syncStatus.channel === 'init') syncStatus.channel = 'mqtt';
+          markRealtimeActivity('mqtt');
+          try {
+            mqttWs.send(mqttSubscribePacket(++mqttPktSeq, [MQTT_CMD_TOPIC, MQTT_CFG_TOPIC]));
+          } catch (e) {}
+        }
+      } else if (pktType === 3) {
+        // PUBLISH
+        if (offset + 2 <= pktEnd) {
+          var tLen = (buf[offset] << 8) | buf[offset + 1];
+          var p = offset + 2;
+          if (p + tLen <= pktEnd) {
+            var topic = utf8BytesToStr(buf.subarray(p, p + tLen));
+            p += tLen;
+            if (qos > 0) p += 2;
+            var msgText = utf8BytesToStr(buf.subarray(p, pktEnd));
+            markRealtimeActivity('mqtt');
+            try {
+              var payloadObj = JSON.parse(msgText);
+              applyIncomingSync(payloadObj, topic === MQTT_CFG_TOPIC);
+            } catch (e) {}
+          }
+        }
+      }
+      offset = pktEnd;
+    }
+  }
+
+  function connectMqtt() {
+    if (typeof WebSocket === 'undefined') return;
+    if (mqttWs && (mqttWs.readyState === 0 || mqttWs.readyState === 1)) return;
+    var brokerUrl = MQTT_BROKERS[mqttBrokerIdx % MQTT_BROKERS.length];
+    try {
+      var acked = false;
+      mqttWs = new WebSocket(brokerUrl, 'mqtt');
+      mqttWs.binaryType = 'arraybuffer';
+      mqttOpenTimer = setTimeout(function () {
+        mqttOpenTimer = null;
+        if (!acked) {
+          closeMqtt();
+          mqttBrokerIdx = (mqttBrokerIdx + 1) % MQTT_BROKERS.length;
+          scheduleMqttReconnect(2500);
+        }
+      }, 5000);
+
+      mqttWs.onopen = function () {
+        try {
+          var cid = 'vd_' + Math.random().toString(36).slice(2, 10);
+          mqttWs.send(mqttConnectPacket(cid));
+          mqttPingTimer = setInterval(function () {
+            if (mqttWs && mqttWs.readyState === 1) {
+              try { mqttWs.send(new Uint8Array([0xC0, 0x00])); } catch (e) {}
+            }
+          }, 25000);
+        } catch (e) {}
+      };
+
+      mqttWs.onmessage = function (evt) {
+        acked = true;
+        if (mqttOpenTimer) { clearTimeout(mqttOpenTimer); mqttOpenTimer = null; }
+        if (evt.data instanceof ArrayBuffer) {
+          handleMqttBinary(new Uint8Array(evt.data));
+        }
+      };
+
+      mqttWs.onerror = function () {
+        syncStatus.mqtt = false;
+      };
+
+      mqttWs.onclose = function () {
+        syncStatus.mqtt = false;
+        closeMqtt();
+        if (!acked) mqttBrokerIdx = (mqttBrokerIdx + 1) % MQTT_BROKERS.length;
+        scheduleMqttReconnect(acked ? 3000 : 5000);
+      };
+    } catch (e) {
+      mqttBrokerIdx = (mqttBrokerIdx + 1) % MQTT_BROKERS.length;
+      scheduleMqttReconnect(5000);
+    }
+  }
+
+  // Đẩy trạng thái lên BroadcastChannel + LocalStorage + MQTT WSS + Same-origin Vercel /api/sync + ntfy.sh
   function broadcastSyncPacket(onCloudResult) {
     persistLocal();
     var packet = {
       systemState: memoryStore.systemState,
+      bwConfig: memoryStore.bwConfig,
+      tables: memoryStore.tables
+    };
+    var cfgOnlyPacket = {
       bwConfig: memoryStore.bwConfig,
       tables: memoryStore.tables
     };
@@ -219,35 +450,65 @@
     }
 
     var bodyStr = JSON.stringify(packet);
-    try {
-      fetch(CLOUD_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
-        body: bodyStr,
-        keepalive: true
-      }).then(function (r) {
-        if (r && r.ok) {
-          rateLimitedUntil = 0;
-          if (typeof onCloudResult === 'function') onCloudResult(true);
-        } else {
-          var status = r ? r.status : 0;
-          if (status === 429) {
-            rateLimitedUntil = Date.now() + 30000;
+    var cfgStr = JSON.stringify(cfgOnlyPacket);
+    var mqttSent = publishMqttPacket(MQTT_CMD_TOPIC, bodyStr, false);
+    if (mqttSent) publishMqttPacket(MQTT_CFG_TOPIC, cfgStr, true);
+
+    var promises = [];
+    if (apiSyncEnabled) {
+      promises.push(
+        fetch('/api/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: bodyStr,
+          keepalive: true
+        }).then(function (r) {
+          if (r && r.status === 404) { apiSyncEnabled = false; return false; }
+          return !!(r && r.ok);
+        }).catch(function () { return false; })
+      );
+    }
+
+    if (Date.now() >= ntfyBlockedUntil && Date.now() >= rateLimitedUntil) {
+      promises.push(
+        fetch(CLOUD_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+          body: bodyStr,
+          keepalive: true
+        }).then(function (r) {
+          if (r && r.ok) {
+            rateLimitedUntil = 0;
+            ntfyFailCount = 0;
+            ntfyBlockedUntil = 0;
+            return true;
           }
-          console.warn('Cloud sync POST status:', status);
-          if (typeof onCloudResult === 'function') onCloudResult(false, status);
-        }
-      }).catch(function (err) {
-        console.warn('Cloud sync POST error:', err);
-        if (typeof onCloudResult === 'function') onCloudResult(false, err);
-      });
-    } catch (e) {
-      if (typeof onCloudResult === 'function') onCloudResult(false, e);
+          if (r && r.status === 429) rateLimitedUntil = Date.now() + 30000;
+          return false;
+        }).catch(function () {
+          ntfyFailCount += 1;
+          if (ntfyFailCount >= 2) ntfyBlockedUntil = Date.now() + 180000;
+          return false;
+        })
+      );
+    }
+
+    if (typeof onCloudResult === 'function') {
+      if (mqttSent) {
+        onCloudResult(true);
+      } else if (promises.length > 0) {
+        Promise.all(promises).then(function (results) {
+          var ok = results.some(Boolean);
+          if (ok) onCloudResult(true);
+          else onCloudResult(false, 'All cloud relays unavailable');
+        });
+      } else {
+        onCloudResult(false, 'No active cloud relay');
+      }
     }
   }
 
-  // Kênh 2: Nhận dữ liệu Realtime từ Cloud ưu tiên WebSocket (wss://) -> dự phòng SSE (/sse) -> Catch-up Poll
-  // WebSocket không bị buffer bởi trình duyệt Cốc Cốc / Antivirus Web Shield / Proxy và không bị giới hạn 429 khi chờ
+  // Kênh 2: Đồng bộ Cloud đa đường (MQTT-over-WSS + ntfy WS/SSE + Same-origin /api/sync fallback)
   var WS_URL = CLOUD_URL.replace(/^https:/i, 'wss:').replace(/^http:/i, 'ws:') + '/ws';
   var ws = null;
   var wsOpenTimer = null;
@@ -256,9 +517,10 @@
   var eventSource = null;
   var maxHistoricalServerTime = 0;
   var initialLoadDone = false;
+  var apiSyncInitialized = false;
   var lastCatchupAt = 0;
   var lastRealtimeActivityAt = Date.now();
-  var syncStatus = { channel: 'init', lastActivityAt: lastRealtimeActivityAt };
+  var syncStatus = { channel: 'init', mqtt: false, ntfy: false, apiSync: true, lastActivityAt: lastRealtimeActivityAt };
   window.__VD_SYNC_STATUS = syncStatus;
 
   function markRealtimeActivity(channel) {
@@ -267,10 +529,27 @@
     if (channel) syncStatus.channel = channel;
   }
 
+  function recordNtfySuccess(channelName) {
+    ntfyFailCount = 0;
+    ntfyBlockedUntil = 0;
+    syncStatus.ntfy = channelName || true;
+    markRealtimeActivity(channelName || 'ntfy');
+  }
+
+  function recordNtfyFailure() {
+    syncStatus.ntfy = false;
+    ntfyFailCount += 1;
+    if (ntfyFailCount >= 2) {
+      ntfyBlockedUntil = Date.now() + 180000;
+      closeWS();
+      closeSSE();
+    }
+  }
+
   function processCloudLine(env, forceHistorical) {
     if (!env) return;
     if (env.event === 'open' || env.event === 'keepalive') {
-      if (!forceHistorical) markRealtimeActivity();
+      if (!forceHistorical) recordNtfySuccess(syncStatus.ntfy || 'ntfy');
       return;
     }
     if (!env.id || seenCloudIds[env.id]) return;
@@ -285,19 +564,48 @@
     }
   }
 
+  function catchupApiSync(forceHist) {
+    if (!apiSyncEnabled) return Promise.resolve();
+    return fetch('/api/sync')
+      .then(function (r) {
+        if (r.status === 404) {
+          apiSyncEnabled = false;
+          syncStatus.apiSync = false;
+          return null;
+        }
+        return r.ok ? r.json() : null;
+      })
+      .then(function (data) {
+        if (!data || !Array.isArray(data.items)) return;
+        var isInit = !!forceHist || !apiSyncInitialized;
+        apiSyncInitialized = true;
+        if (!isMqttConnected() && !syncStatus.ntfy) syncStatus.channel = 'api_sync';
+        markRealtimeActivity();
+        for (var i = 0; i < data.items.length; i++) {
+          processCloudLine(data.items[i], isInit);
+        }
+      })
+      .catch(function () {});
+  }
+
   function catchupCloud(sinceStr, forceHistorical) {
-    if (Date.now() < rateLimitedUntil) return Promise.resolve();
+    if (Date.now() < rateLimitedUntil || Date.now() < ntfyBlockedUntil) return Promise.resolve();
     var nowMs = Date.now();
     if (!forceHistorical && nowMs - lastCatchupAt < 4000) return Promise.resolve();
     lastCatchupAt = nowMs;
 
-    return fetch(CLOUD_URL + '/json?poll=1&since=' + (sinceStr || '2m'))
+    var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    var abortTimer = ctrl ? setTimeout(function () { try { ctrl.abort(); } catch (e) {} }, 5000) : null;
+    var fetchOpts = ctrl ? { signal: ctrl.signal } : undefined;
+
+    return fetch(CLOUD_URL + '/json?poll=1&since=' + (sinceStr || '2m'), fetchOpts)
       .then(function (r) {
+        if (abortTimer) { clearTimeout(abortTimer); abortTimer = null; }
         if (r.status === 429) {
           rateLimitedUntil = Date.now() + 45000;
           return '';
         }
-        if (r.ok) markRealtimeActivity();
+        if (r.ok) recordNtfySuccess(syncStatus.ntfy || 'http');
         return r.ok ? r.text() : '';
       })
       .then(function (text) {
@@ -320,7 +628,10 @@
           } catch (e) {}
         }
       })
-      .catch(function () {});
+      .catch(function () {
+        if (abortTimer) { clearTimeout(abortTimer); abortTimer = null; }
+        recordNtfyFailure();
+      });
   }
 
   function closeSSE() {
@@ -339,29 +650,33 @@
   }
 
   function connectSSE() {
-    if (Date.now() < rateLimitedUntil) return;
+    if (Date.now() < rateLimitedUntil || Date.now() < ntfyBlockedUntil) return;
     if (ws && ws.readyState === 1) return;
     if (typeof EventSource === 'undefined') return;
     if (eventSource && eventSource.readyState !== 2) return;
     try {
+      var sseOpened = false;
       eventSource = new EventSource(CLOUD_URL + '/sse');
       eventSource.addEventListener('open', function () {
-        markRealtimeActivity('sse');
+        sseOpened = true;
+        recordNtfySuccess('sse');
       });
       eventSource.addEventListener('keepalive', function () {
-        markRealtimeActivity('sse');
+        recordNtfySuccess('sse');
       });
       eventSource.onmessage = function (evt) {
-        markRealtimeActivity('sse');
+        sseOpened = true;
+        recordNtfySuccess('sse');
         try {
           var env = JSON.parse(evt.data);
           processCloudLine(env, false);
         } catch (e) {}
       };
       eventSource.onerror = function () {
+        if (!sseOpened) recordNtfyFailure();
         if (eventSource && eventSource.readyState === 2) {
           eventSource = null;
-          setTimeout(connectRealtime, 6000);
+          if (Date.now() >= ntfyBlockedUntil) setTimeout(connectRealtime, 6000);
         }
       };
     } catch (e) {}
@@ -376,7 +691,7 @@
   }
 
   function connectWS() {
-    if (Date.now() < rateLimitedUntil) return;
+    if (Date.now() < rateLimitedUntil || Date.now() < ntfyBlockedUntil) return;
     if (typeof WebSocket === 'undefined') {
       connectSSE();
       return;
@@ -390,19 +705,22 @@
         wsOpenTimer = null;
         if (!opened) {
           closeWS();
-          connectSSE();
-          scheduleWsRetry(15000);
+          recordNtfyFailure();
+          if (Date.now() >= ntfyBlockedUntil) {
+            connectSSE();
+            scheduleWsRetry(15000);
+          }
         }
-      }, 5000);
+      }, 4500);
 
       ws.onopen = function () {
         opened = true;
         if (wsOpenTimer) { clearTimeout(wsOpenTimer); wsOpenTimer = null; }
         closeSSE();
-        markRealtimeActivity('ws');
+        recordNtfySuccess('ws');
       };
       ws.onmessage = function (evt) {
-        markRealtimeActivity('ws');
+        recordNtfySuccess('ws');
         try {
           var env = JSON.parse(evt.data);
           processCloudLine(env, false);
@@ -410,14 +728,18 @@
       };
       ws.onerror = function () {
         if (!opened) {
-          connectSSE();
+          recordNtfyFailure();
+          if (Date.now() >= ntfyBlockedUntil) connectSSE();
         }
       };
       ws.onclose = function () {
         if (wsOpenTimer) { clearTimeout(wsOpenTimer); wsOpenTimer = null; }
         ws = null;
-        connectSSE();
-        scheduleWsRetry(opened ? 5000 : 15000);
+        if (!opened) recordNtfyFailure();
+        if (Date.now() >= ntfyBlockedUntil) {
+          connectSSE();
+          scheduleWsRetry(opened ? 5000 : 15000);
+        }
       };
     } catch (e) {
       connectSSE();
@@ -425,26 +747,41 @@
   }
 
   function connectRealtime() {
-    if (typeof WebSocket !== 'undefined') {
-      connectWS();
-    } else {
-      connectSSE();
+    if (Date.now() >= ntfyBlockedUntil) {
+      if (typeof WebSocket !== 'undefined') connectWS();
+      else connectSSE();
     }
   }
 
   function initCloudRealtimeListener() {
-    // 1. Lấy cấu hình gần nhất 1 lần lúc mới mở trang
+    // 1. Kết nối ngay MQTT-over-WSS (hoạt động kể cả khi mạng/ISP chặn ntfy.sh)
+    connectMqtt();
+
+    // 2. Lấy cấu hình gần nhất từ ntfy.sh + /api/sync một lần lúc mở trang
     catchupCloud('12h', true).then(function () {
       initialLoadDone = true;
       connectRealtime();
     });
+    catchupApiSync(true);
 
-    // 2. Kết nối ngay WebSocket để không bỏ lỡ lệnh nào trong lúc tải cấu hình
+    // 3. Kết nối ngay ntfy WebSocket nếu mạng cho phép
     connectRealtime();
 
-    // 3. Watchdog mỗi 15 giây: phát hiện cả socket bị ngắt LẪN socket bị proxy/antivirus làm treo ngầm (>95s không frame)
+    // 4. Watchdog + Same-origin /api/sync fallback poll khi cả MQTT lẫn ntfy đều bị chặn/đứt
+    setInterval(function () {
+      if (!isMqttConnected() && apiSyncEnabled) {
+        var ntfyHealthy = (Date.now() < ntfyBlockedUntil) ? false : ((ws && ws.readyState === 1) || (eventSource && eventSource.readyState === 1));
+        if (!ntfyHealthy) {
+          catchupApiSync(false);
+        }
+      }
+    }, 3000);
+
     setInterval(function () {
       if (!initialLoadDone) return;
+      if (!isMqttConnected()) connectMqtt();
+
+      if (Date.now() < ntfyBlockedUntil) return;
       var hasLiveWS = !!(ws && ws.readyState === 1);
       var hasLiveSSE = !!(eventSource && eventSource.readyState === 1);
       var isStale = (Date.now() - lastRealtimeActivityAt) > 95000;
@@ -465,22 +802,32 @@
       }
     }, 15000);
 
-    // 4. Khi mở lại tab / bật sáng màn hình điện thoại -> tự kiểm tra kết nối và đồng bộ lại ngay
+    // 5. Khi mở lại tab / bật sáng màn hình / có mạng lại -> nối lại tất cả kênh realtime
     document.addEventListener('visibilitychange', function () {
       if (document.visibilityState === 'visible') {
-        var healthy = (ws && ws.readyState === 1) || (eventSource && eventSource.readyState === 1);
-        if (!healthy || (Date.now() - lastRealtimeActivityAt) > 30000) {
-          connectRealtime();
-          catchupCloud('2m', false);
+        if (!isMqttConnected()) connectMqtt();
+        ntfyFailCount = 0;
+        if (Date.now() >= ntfyBlockedUntil) {
+          var healthy = (ws && ws.readyState === 1) || (eventSource && eventSource.readyState === 1);
+          if (!healthy || (Date.now() - lastRealtimeActivityAt) > 30000) {
+            connectRealtime();
+            catchupCloud('2m', false);
+          }
         }
+        if (!isMqttConnected()) catchupApiSync(false);
       }
     });
 
     window.addEventListener('online', function () {
+      ntfyFailCount = 0;
+      ntfyBlockedUntil = 0;
+      closeMqtt();
       closeWS();
       closeSSE();
+      connectMqtt();
       connectRealtime();
       catchupCloud('2m', false);
+      catchupApiSync(false);
     });
   }
 
