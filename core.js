@@ -241,9 +241,24 @@
         ctx.stroke();
     };
 
+    LuckyWheel.prototype.cancelSpin = function () {
+        this._spinToken = (this._spinToken || 0) + 1;
+        if (this._spinRafId) {
+            cancelAnimationFrame(this._spinRafId);
+            this._spinRafId = null;
+        }
+        if (this._spinFallbackTimer) {
+            clearTimeout(this._spinFallbackTimer);
+            this._spinFallbackTimer = null;
+        }
+        this.isSpinning = false;
+    };
+
     LuckyWheel.prototype.spinTo = function (targetIndex, onComplete) {
         if (this.isSpinning) return;
         this.isSpinning = true;
+        this._spinToken = (this._spinToken || 0) + 1;
+        var myToken = this._spinToken;
 
         var sliceAngle = (Math.PI * 2) / this.participants.length;
         var extraRots = Math.floor(10 + Math.random() * 5); // At least 10 full rotations
@@ -276,13 +291,33 @@
         var startAngle = this.currentAngle;
         var finalAngle = startAngle + totalRotation;
 
-        var startTime = null;
+        var wallStart = Date.now();
         var duration = 7000; // Slightly longer for better physics feel
         var self = this;
 
-        function animate(timestamp) {
-            if (!startTime) startTime = timestamp;
-            var elapsed = timestamp - startTime;
+        function finishSpin() {
+            if (self._spinToken !== myToken) return;
+            self._spinToken++;
+            if (self._spinRafId) {
+                cancelAnimationFrame(self._spinRafId);
+                self._spinRafId = null;
+            }
+            if (self._spinFallbackTimer) {
+                clearTimeout(self._spinFallbackTimer);
+                self._spinFallbackTimer = null;
+            }
+            self.currentAngle = finalAngle;
+            self.draw();
+            self.isSpinning = false;
+            if (onComplete) onComplete();
+        }
+
+        // Prevent spin lockup when tab is minimized or occluded (requestAnimationFrame pauses)
+        this._spinFallbackTimer = setTimeout(finishSpin, duration + 250);
+
+        function animate() {
+            if (self._spinToken !== myToken) return;
+            var elapsed = Date.now() - wallStart;
             var progress = Math.min(elapsed / duration, 1);
 
             // Custom cubic-bezier like easeOut
@@ -291,13 +326,12 @@
             self.draw();
 
             if (progress < 1) {
-                requestAnimationFrame(animate);
+                self._spinRafId = requestAnimationFrame(animate);
             } else {
-                self.isSpinning = false;
-                if (onComplete) onComplete();
+                finishSpin();
             }
         }
-        requestAnimationFrame(animate);
+        this._spinRafId = requestAnimationFrame(animate);
     };
 
     window.LuckyWheel = LuckyWheel;

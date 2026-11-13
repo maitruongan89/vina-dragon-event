@@ -246,16 +246,37 @@
     }
   }
 
-  // Kênh 2: Nhận dữ liệu Realtime từ Cloud qua SSE (EventSource - 1 kết nối duy nhất, không spam HTTP poll)
+  // Kênh 2: Nhận dữ liệu Realtime từ Cloud ưu tiên WebSocket (wss://) -> dự phòng SSE (/sse) -> Catch-up Poll
+  // WebSocket không bị buffer bởi trình duyệt Cốc Cốc / Antivirus Web Shield / Proxy và không bị giới hạn 429 khi chờ
+  var WS_URL = CLOUD_URL.replace(/^https:/i, 'wss:').replace(/^http:/i, 'ws:') + '/ws';
+  var ws = null;
+  var wsOpenTimer = null;
+  var wsRetryTimer = null;
+  var lastWsAttemptAt = 0;
   var eventSource = null;
   var maxHistoricalServerTime = 0;
   var initialLoadDone = false;
   var lastCatchupAt = 0;
+  var lastRealtimeActivityAt = Date.now();
+  var syncStatus = { channel: 'init', lastActivityAt: lastRealtimeActivityAt };
+  window.__VD_SYNC_STATUS = syncStatus;
+
+  function markRealtimeActivity(channel) {
+    lastRealtimeActivityAt = Date.now();
+    syncStatus.lastActivityAt = lastRealtimeActivityAt;
+    if (channel) syncStatus.channel = channel;
+  }
 
   function processCloudLine(env, forceHistorical) {
-    if (!env || !env.id || seenCloudIds[env.id]) return;
+    if (!env) return;
+    if (env.event === 'open' || env.event === 'keepalive') {
+      if (!forceHistorical) markRealtimeActivity();
+      return;
+    }
+    if (!env.id || seenCloudIds[env.id]) return;
     seenCloudIds[env.id] = true;
     if (env.event === 'message' && env.message) {
+      if (!forceHistorical) markRealtimeActivity();
       try {
         var data = JSON.parse(env.message);
         var isHist = !!forceHistorical || (maxHistoricalServerTime > 0 && env.time && env.time < maxHistoricalServerTime);
@@ -276,6 +297,7 @@
           rateLimitedUntil = Date.now() + 45000;
           return '';
         }
+        if (r.ok) markRealtimeActivity();
         return r.ok ? r.text() : '';
       })
       .then(function (text) {
@@ -301,57 +323,163 @@
       .catch(function () {});
   }
 
+  function closeSSE() {
+    if (eventSource) {
+      try { eventSource.close(); } catch (e) {}
+      eventSource = null;
+    }
+  }
+
+  function closeWS() {
+    if (wsOpenTimer) { clearTimeout(wsOpenTimer); wsOpenTimer = null; }
+    if (ws) {
+      try { ws.onopen = ws.onmessage = ws.onerror = ws.onclose = null; ws.close(); } catch (e) {}
+      ws = null;
+    }
+  }
+
   function connectSSE() {
+    if (Date.now() < rateLimitedUntil) return;
+    if (ws && ws.readyState === 1) return;
     if (typeof EventSource === 'undefined') return;
     if (eventSource && eventSource.readyState !== 2) return;
     try {
       eventSource = new EventSource(CLOUD_URL + '/sse');
+      eventSource.addEventListener('open', function () {
+        markRealtimeActivity('sse');
+      });
+      eventSource.addEventListener('keepalive', function () {
+        markRealtimeActivity('sse');
+      });
       eventSource.onmessage = function (evt) {
+        markRealtimeActivity('sse');
         try {
           var env = JSON.parse(evt.data);
           processCloudLine(env, false);
         } catch (e) {}
       };
       eventSource.onerror = function () {
-        // Tránh mở lại quá dày nếu trình duyệt tự đóng
         if (eventSource && eventSource.readyState === 2) {
           eventSource = null;
-          setTimeout(connectSSE, 6000);
+          setTimeout(connectRealtime, 6000);
         }
       };
     } catch (e) {}
+  }
+
+  function scheduleWsRetry(delayMs) {
+    if (wsRetryTimer) return;
+    wsRetryTimer = setTimeout(function () {
+      wsRetryTimer = null;
+      connectWS();
+    }, delayMs || 8000);
+  }
+
+  function connectWS() {
+    if (Date.now() < rateLimitedUntil) return;
+    if (typeof WebSocket === 'undefined') {
+      connectSSE();
+      return;
+    }
+    if (ws && (ws.readyState === 0 || ws.readyState === 1)) return;
+    lastWsAttemptAt = Date.now();
+    try {
+      var opened = false;
+      ws = new WebSocket(WS_URL);
+      wsOpenTimer = setTimeout(function () {
+        wsOpenTimer = null;
+        if (!opened) {
+          closeWS();
+          connectSSE();
+          scheduleWsRetry(15000);
+        }
+      }, 5000);
+
+      ws.onopen = function () {
+        opened = true;
+        if (wsOpenTimer) { clearTimeout(wsOpenTimer); wsOpenTimer = null; }
+        closeSSE();
+        markRealtimeActivity('ws');
+      };
+      ws.onmessage = function (evt) {
+        markRealtimeActivity('ws');
+        try {
+          var env = JSON.parse(evt.data);
+          processCloudLine(env, false);
+        } catch (e) {}
+      };
+      ws.onerror = function () {
+        if (!opened) {
+          connectSSE();
+        }
+      };
+      ws.onclose = function () {
+        if (wsOpenTimer) { clearTimeout(wsOpenTimer); wsOpenTimer = null; }
+        ws = null;
+        connectSSE();
+        scheduleWsRetry(opened ? 5000 : 15000);
+      };
+    } catch (e) {
+      connectSSE();
+    }
+  }
+
+  function connectRealtime() {
+    if (typeof WebSocket !== 'undefined') {
+      connectWS();
+    } else {
+      connectSSE();
+    }
   }
 
   function initCloudRealtimeListener() {
     // 1. Lấy cấu hình gần nhất 1 lần lúc mới mở trang
     catchupCloud('12h', true).then(function () {
       initialLoadDone = true;
-      connectSSE();
+      connectRealtime();
     });
 
-    // 2. Kết nối ngay SSE để không bỏ lỡ lệnh nào trong lúc tải cấu hình
-    connectSSE();
+    // 2. Kết nối ngay WebSocket để không bỏ lỡ lệnh nào trong lúc tải cấu hình
+    connectRealtime();
 
-    // 3. Poll dự phòng RẤT THƯA (25 giây/lần) VÀ CHỈ chạy khi SSE đang bị ngắt (tránh lỗi 429 từ ntfy.sh)
+    // 3. Watchdog mỗi 15 giây: phát hiện cả socket bị ngắt LẪN socket bị proxy/antivirus làm treo ngầm (>95s không frame)
     setInterval(function () {
       if (!initialLoadDone) return;
-      if (eventSource && eventSource.readyState === 1) return;
-      connectSSE();
-      catchupCloud('1m', false);
-    }, 25000);
+      var hasLiveWS = !!(ws && ws.readyState === 1);
+      var hasLiveSSE = !!(eventSource && eventSource.readyState === 1);
+      var isStale = (Date.now() - lastRealtimeActivityAt) > 95000;
 
-    // 4. Khi mở lại tab / bật sáng màn hình điện thoại -> tự nối lại SSE và đồng bộ nhanh
+      if (isStale) {
+        closeWS();
+        closeSSE();
+        connectRealtime();
+        catchupCloud('2m', false);
+        return;
+      }
+
+      if (!hasLiveWS && !hasLiveSSE) {
+        connectRealtime();
+        catchupCloud('2m', false);
+      } else if (!hasLiveWS && typeof WebSocket !== 'undefined' && (Date.now() - lastWsAttemptAt > 60000)) {
+        connectWS();
+      }
+    }, 15000);
+
+    // 4. Khi mở lại tab / bật sáng màn hình điện thoại -> tự kiểm tra kết nối và đồng bộ lại ngay
     document.addEventListener('visibilitychange', function () {
       if (document.visibilityState === 'visible') {
-        if (!eventSource || eventSource.readyState !== 1) {
-          connectSSE();
+        var healthy = (ws && ws.readyState === 1) || (eventSource && eventSource.readyState === 1);
+        if (!healthy || (Date.now() - lastRealtimeActivityAt) > 30000) {
+          connectRealtime();
           catchupCloud('2m', false);
         }
       }
     });
 
     window.addEventListener('online', function () {
-      connectSSE();
+      closeWS();
+      closeSSE();
+      connectRealtime();
       catchupCloud('2m', false);
     });
   }

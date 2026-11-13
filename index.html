@@ -7,7 +7,7 @@
     <base target="_top">
     <title>VINA DRAGON - Main Display</title>
     <script>if (location.search.indexOf("page=admin") > -1 || location.search.indexOf("view=admin") > -1) { location.replace("/admin"); }</script>
-    <link rel="stylesheet" href="/styles.css?v=7">
+    <link rel="stylesheet" href="/styles.css?v=8">
     <style>
         #sync-indicator {
             position: fixed;
@@ -379,8 +379,8 @@
         </div>
     </div>
 
-    <script src="/gas-shim.js?v=7"></script>
-    <script src="/core.js?v=7"></script>
+    <script src="/gas-shim.js?v=8"></script>
+    <script src="/core.js?v=8"></script>
 
     <script>
         // Global Error Boundary
@@ -472,6 +472,9 @@
 
             function showSect(id) {
                 if (log) log.innerText = "Mai Trường An - 0905012131";
+                if (id !== 'section-bonus-wheel' && typeof resetBonusWheelAnimation === 'function') {
+                    resetBonusWheelAnimation(true);
+                }
                 document.querySelectorAll('.section').forEach(function (s) {
                     s.classList.remove('active');
                 });
@@ -583,6 +586,7 @@
             // LISTENERS
             broadcast.on(EVENT_TYPES.RESET_DISPLAY, function () {
                 stopSlideshow();
+                if (typeof resetBonusWheelAnimation === 'function') resetBonusWheelAnimation(true);
                 showSect('section-waiting');
             });
 
@@ -814,12 +818,34 @@
             broadcast.on(EVENT_TYPES.LD_RESET, function () {
                 stopSlideshow();
                 stopAllAudio();
+                if (typeof resetBonusWheelAnimation === 'function') resetBonusWheelAnimation(true);
                 showSect('section-waiting');
             });
 
             // --- BONUS WHEEL LOGIC (BÀN TAY NẮM CHẶT BÀN TAY) ---
             var bonusWheel = new window.LuckyWheel('bonus-wheel-canvas');
             var bwAnimating = false;
+            var bwSpinTimer = null;
+
+            function resetBonusWheelAnimation(hideAllHands) {
+                if (bwSpinTimer) {
+                    clearTimeout(bwSpinTimer);
+                    bwSpinTimer = null;
+                }
+                bwAnimating = false;
+                if (bonusWheel && bonusWheel.cancelSpin) bonusWheel.cancelSpin();
+                if (typeof bwFireworks !== 'undefined' && bwFireworks && bwFireworks.stop) bwFireworks.stop();
+                var hc = document.getElementById('bw-hand-clasped');
+                var rb = document.getElementById('bw-result-banner');
+                if (hc) hc.classList.remove('show');
+                if (rb) rb.classList.remove('show');
+                if (hideAllHands) {
+                    var hl = document.getElementById('bw-hand-left');
+                    var hr = document.getElementById('bw-hand-right');
+                    if (hl) hl.classList.remove('show', 'moving-to-top');
+                    if (hr) hr.classList.remove('show', 'moving-to-top');
+                }
+            }
             var defaultPenalties = [
                 "💪 Nắm tai nhún nhảy 5 cái",
                 "🎤 Hát 1 bài hát",
@@ -1392,8 +1418,7 @@
             broadcast.on(EVENT_TYPES.BW_SHOW_HAND, function (data) {
                 stopSlideshow();
                 showSect('section-bonus-wheel');
-                bwAnimating = false;
-                bwFireworks.stop();
+                resetBonusWheelAnimation(false);
 
                 var hasPayloadPenalties = !!(data && Array.isArray(data.penalties) && data.penalties.length > 0);
                 if (hasPayloadPenalties) {
@@ -1473,7 +1498,9 @@
                 }
 
                 // Bước 2: Khi 2 bàn tay gặp nhau trên đỉnh vòng quay (~1.15s) -> Hiện bàn tay nắm chặt, Bắn pháo hoa nghệ thuật & Bắt đầu quay
-                setTimeout(function () {
+                if (bwSpinTimer) clearTimeout(bwSpinTimer);
+                bwSpinTimer = setTimeout(function () {
+                    bwSpinTimer = null;
                     if (handLeft && handRight) {
                         handLeft.classList.remove('show', 'moving-to-top');
                         handRight.classList.remove('show', 'moving-to-top');
