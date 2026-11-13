@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>VINA DRAGON - Routing</title>
+  <script>
+    (function () {
+      var q = location.search || '';
+      if (q.indexOf('page=admin') > -1 || q.indexOf('view=admin') > -1 || location.pathname.indexOf('admin') > -1) {
+        location.replace('/admin');
+      } else {
+        location.replace('/');
+      }
+    })();
+  </script>
+</head>
+<body style="background:#8b0000;color:#FFD700;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;">
+  Đang chuyển hướng...
+</body>
+</html>

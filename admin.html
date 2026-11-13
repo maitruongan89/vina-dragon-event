@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VINA DRAGON - Admin Panel</title>
-    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/styles.css?v=7">
 </head>
 
 <body class="admin-body">
@@ -436,8 +436,8 @@
         </main>
     </div>
 
-    <script src="/gas-shim.js"></script>
-    <script src="/core.js"></script>
+    <script src="/gas-shim.js?v=7"></script>
+    <script src="/core.js?v=7"></script>
     <script>
         var dataManager, broadcast;
 
@@ -451,10 +451,16 @@
         };
 
         var statePenaltiesSynced = false;
+        var lastBwRefreshTs = 0;
         function updateLiveMonitor(state) {
             var m = document.getElementById('live-monitor');
             var ml = document.getElementById('live-monitor-lucky');
             if (!state) return;
+
+            if (state.timestamp && state.timestamp !== lastBwRefreshTs) {
+                lastBwRefreshTs = state.timestamp;
+                if (typeof refreshBWCount === 'function') refreshBWCount();
+            }
 
             if (!statePenaltiesSynced && state.payload && Array.isArray(state.payload.penalties) && state.payload.penalties.length > 0) {
                 statePenaltiesSynced = true;
@@ -465,6 +471,7 @@
             }
 
             var txt = "> Trạng thái: " + state.action;
+            if (state.action === 'initial_sync') txt = "> Sẵn sàng điều khiển (Đã đồng bộ Cloud)";
             if (state.action === EVENT_TYPES.RESET_DISPLAY) txt = "> Màn hình: TRANG CHỜ";
             if (state.action === EVENT_TYPES.SHOW_INDIVIDUAL_AWARD) txt = "> Đang hiện CÁ NHÂN: " + (state.payload.Name || "---");
             if (state.action === EVENT_TYPES.SHOW_TEAM_AWARD) txt = "> Đang hiện TẬP THỂ: " + (state.payload.Name || "---");
@@ -1024,6 +1031,7 @@
             renderPenaltiesEditor(getSavedLocalPenalties() || DEFAULT_PENALTIES.slice());
             refreshData();
             refreshBWCount();
+            setTimeout(refreshBWCount, 1200);
         });
     </script>
 </body>
